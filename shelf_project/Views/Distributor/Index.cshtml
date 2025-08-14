@@ -1,0 +1,91 @@
+@model shelf_project.Models.Distributor
+@{
+    ViewData["Title"] = "代理店ダッシュボード";
+}
+
+<div class="container-fluid">
+    <h1>代理店ダッシュボード</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>契約情報</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>会社名:</strong> @Model.CompanyName</p>
+                            <p><strong>契約開始日:</strong> @Model.ContractStartDate.ToString("yyyy/MM/dd")</p>
+                            <p><strong>月額料金:</strong> ¥@Model.MonthlyFee.ToString("N0")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>棚数:</strong> @Model.ShelfCount 台</p>
+                            <p><strong>商品選定数:</strong> @Model.ProductSelectionCount 商品</p>
+                            <p><strong>ステータス:</strong> 
+                                @if(Model.IsActive)
+                                {
+                                    <span class="badge bg-success">アクティブ</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">非アクティブ</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5>今月の売上</h5>
+                    <h3>¥@((ViewBag.MonthlySales ?? 0m).ToString("N0"))</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>今月の手数料</h5>
+                    <h3>¥@((ViewBag.MonthlyCommission ?? 0m).ToString("N0"))</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>選定商品数</h5>
+                    <h3>@(Model.DistributorProducts?.Count(dp => dp.IsActive) ?? 0) / @Model.ProductSelectionCount</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5>設置棚数</h5>
+                    <h3>@Model.ShelfCount 台</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>クイックアクション</h5>
+                </div>
+                <div class="card-body">
+                    <a href="@Url.Action("Products")" class="btn btn-primary me-2">商品管理</a>
+                    <a href="@Url.Action("Sales")" class="btn btn-info me-2">売上確認</a>
+                    <a href="@Url.Action("Dashboard")" class="btn btn-success me-2">詳細ダッシュボード</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

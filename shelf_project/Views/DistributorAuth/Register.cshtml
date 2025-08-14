@@ -1,0 +1,108 @@
+@model shelf_project.ViewModels.DistributorRegisterViewModel
+@{
+    ViewData["Title"] = "代理店新規登録";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-store"></i>
+                        代理店新規登録
+                    </h3>
+                    <p class="mb-0 mt-2">Shelf Upの代理店パートナーとして参加しませんか</p>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Register" method="post">
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="FirstName" class="form-label"></label>
+                                    <input asp-for="FirstName" class="form-control" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="LastName" class="form-label"></label>
+                                    <input asp-for="LastName" class="form-control" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="CompanyName" class="form-label"></label>
+                            <input asp-for="CompanyName" class="form-control" placeholder="株式会社○○ / ○○商店 など" />
+                            <span asp-validation-for="CompanyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" placeholder="example@company.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Password" class="form-label"></label>
+                                    <input asp-for="Password" class="form-control" />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                                    <input asp-for="ConfirmPassword" class="form-control" />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Address" class="form-label"></label>
+                            <input asp-for="Address" class="form-control" placeholder="〒000-0000 ○○県○○市..." />
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="PhoneNumber" class="form-label"></label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="03-0000-0000" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">代理店プラン</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li>✓ 基本月額料金: 3,980円</li>
+                                    <li>✓ 商品選定数: 5商品（追加 +200円/商品）</li>
+                                    <li>✓ 設置棚数: 1台（追加 +2,000円/台）</li>
+                                    <li>✓ 最低契約期間: 1年</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">代理店として登録</button>
+                    </form>
+
+                    <hr>
+                    
+                    <div class="text-center">
+                        <p>すでに代理店アカウントをお持ちの方は</p>
+                        <a asp-action="Login" class="btn btn-outline-primary">代理店ログイン</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

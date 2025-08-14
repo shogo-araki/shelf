@@ -1,0 +1,172 @@
+@model shelf_project.Models.Manufacturer
+@{
+    ViewData["Title"] = "メーカーダッシュボード";
+}
+
+<div class="container-fluid">
+    <h1>メーカーダッシュボード</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>会社情報</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>会社名:</strong> @Model.CompanyName</p>
+                            <p><strong>登録日:</strong> @Model.CreatedAt.ToString("yyyy/MM/dd")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>商品数:</strong> @(Model.Products?.Count ?? 0) 商品</p>
+                            <p><strong>ステータス:</strong> 
+                                @if(Model.IsActive)
+                                {
+                                    <span class="badge bg-success">アクティブ</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">非アクティブ</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5>登録商品数</h5>
+                    <h3>@(Model.Products?.Count ?? 0)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>販売中商品</h5>
+                    <h3>@(Model.Products?.Count(p => p.IsActive) ?? 0)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>在庫切れ商品</h5>
+                    <h3>@(Model.Products?.Count(p => p.IsActive && p.StockQuantity == 0) ?? 0)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5>低在庫商品</h5>
+                    <h3>@(Model.Products?.Count(p => p.IsActive && p.StockQuantity > 0 && p.StockQuantity <= 10) ?? 0)</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>商品ステータス</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Products != null && Model.Products.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>商品名</th>
+                                        <th>在庫</th>
+                                        <th>卸価格</th>
+                                        <th>販売価格</th>
+                                        <th>ステータス</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var product in Model.Products.OrderBy(p => p.StockQuantity).Take(10))
+                                    {
+                                        <tr>
+                                            <td>@product.Name</td>
+                                            <td>
+                                                @if (product.StockQuantity == 0)
+                                                {
+                                                    <span class="badge bg-danger">@product.StockQuantity</span>
+                                                }
+                                                else if (product.StockQuantity <= 10)
+                                                {
+                                                    <span class="badge bg-warning">@product.StockQuantity</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">@product.StockQuantity</span>
+                                                }
+                                            </td>
+                                            <td>¥@product.WholesalePrice.ToString("N0")</td>
+                                            <td>¥@product.RetailPrice.ToString("N0")</td>
+                                            <td>
+                                                @if (product.IsActive)
+                                                {
+                                                    <span class="badge bg-success">販売中</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">非公開</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>まだ商品が登録されていません。</p>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>クイックアクション</h5>
+                </div>
+                <div class="card-body">
+                    <a href="@Url.Action("CreateProduct")" class="btn btn-primary btn-block mb-2">新商品登録</a>
+                    <a href="@Url.Action("Products")" class="btn btn-info btn-block mb-2">商品管理</a>
+                    <a href="@Url.Action("Orders")" class="btn btn-success btn-block mb-2">注文管理</a>
+                    <a href="@Url.Action("Analytics")" class="btn btn-warning btn-block mb-2">売上分析</a>
+                </div>
+            </div>
+            
+            @if (Model.Products != null && Model.Products.Any(p => p.StockQuantity <= 10 && p.IsActive))
+            {
+                <div class="card mt-3">
+                    <div class="card-header bg-warning">
+                        <h6>在庫アラート</h6>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var product in Model.Products.Where(p => p.StockQuantity <= 10 && p.IsActive).Take(5))
+                        {
+                            <div class="mb-2">
+                                <strong>@product.Name</strong><br>
+                                <small>在庫: @product.StockQuantity 個</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

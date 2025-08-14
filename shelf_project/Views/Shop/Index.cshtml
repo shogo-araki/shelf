@@ -1,0 +1,160 @@
+@model IEnumerable<shelf_project.Models.Product>
+@{
+    ViewData["Title"] = "商品一覧";
+    var distributor = ViewBag.Distributor as shelf_project.Models.Distributor;
+    var qrCode = ViewBag.QRCode as string;
+}
+
+<div class="container-fluid">
+    @if (distributor != null)
+    {
+        <div class="alert alert-info mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="mb-1">
+                        <i class="fas fa-store"></i>
+                        @distributor.CompanyName の紹介商品
+                    </h5>
+                    <p class="mb-0">この代理店が厳選した商品をご覧ください</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    @if (!string.IsNullOrEmpty(distributor.Address))
+                    {
+                        <small class="text-muted">
+                            <i class="fas fa-map-marker-alt"></i>
+                            @distributor.Address
+                        </small>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="jumbotron bg-primary text-white rounded mb-4 p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4">Shelf Up</h1>
+                    <p class="lead">厳選された商品を代理店がお届け</p>
+                    <p>全国の代理店が選んだ、品質の高い商品をお楽しみください。</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    @if (!User.Identity.IsAuthenticated)
+                    {
+                        <a asp-action="Register" class="btn btn-light btn-lg">会員登録</a>
+                        <a asp-action="Login" class="btn btn-outline-light btn-lg">ログイン</a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var product in Model)
+            {
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100 product-card">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 250px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 250px;">
+                                <i class="fas fa-image text-muted fa-3x"></i>
+                            </div>
+                        }
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="text-muted mb-1">
+                                <small>@product.Manufacturer.CompanyName</small>
+                            </p>
+                            
+                            @if (!string.IsNullOrEmpty(product.Description))
+                            {
+                                <p class="card-text flex-grow-1">
+                                    @product.Description.Substring(0, Math.Min(100, product.Description.Length))@(product.Description.Length > 100 ? "..." : "")
+                                </p>
+                            }
+                            
+                            <div class="mb-2">
+                                <span class="h4 text-primary">¥@product.RetailPrice.ToString("N0")</span>
+                                @if (product.FreeShippingThreshold.HasValue)
+                                {
+                                    <br><small class="text-success">¥@product.FreeShippingThreshold.Value.ToString("N0")以上で送料無料</small>
+                                }
+                            </div>
+                            
+                            <div class="mb-2">
+                                @if (product.StockQuantity > 10)
+                                {
+                                    <span class="badge bg-success">在庫あり</span>
+                                }
+                                else if (product.StockQuantity > 0)
+                                {
+                                    <span class="badge bg-warning">残りわずか</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">在庫切れ</span>
+                                }
+                                
+                                @if (product.RequiresRefrigeration || product.RequiresFreezing)
+                                {
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-snowflake"></i>
+                                        @(product.RequiresFreezing ? "冷凍" : "冷蔵")
+                                    </span>
+                                }
+                            </div>
+                            
+                            <div class="mt-auto">
+                                @{
+                                    var productUrl = !string.IsNullOrEmpty(qrCode) 
+                                        ? Url.Action("Product", new { id = product.Id, qr = qrCode })
+                                        : Url.Action("Product", new { id = product.Id });
+                                }
+                                <a href="@productUrl" class="btn btn-primary w-100">
+                                    詳細を見る
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-boxes fa-4x text-muted mb-3"></i>
+            <h3>商品が見つかりませんでした</h3>
+            @if (distributor != null)
+            {
+                <p>この代理店はまだ商品を選定していません。</p>
+            }
+            else
+            {
+                <p>現在販売中の商品がありません。</p>
+            }
+        </div>
+    }
+</div>
+
+@section Styles {
+<style>
+.product-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.jumbotron {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+</style>
+}

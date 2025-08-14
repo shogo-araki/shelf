@@ -1,0 +1,137 @@
+@model IEnumerable<shelf_project.Models.Sale>
+@{
+    ViewData["Title"] = "売上確認";
+}
+
+<div class="container-fluid">
+    <h1>売上確認</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4>¥@Model.Where(s => s.SaleDate.Month == DateTime.Now.Month).Sum(s => s.TotalAmount).ToString("N0")</h4>
+                    <p>今月の総売上</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4>¥@Model.Where(s => s.SaleDate.Month == DateTime.Now.Month).Sum(s => s.DistributorCommission).ToString("N0")</h4>
+                    <p>今月の手数料</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h4>@Model.Count(s => s.SaleDate.Month == DateTime.Now.Month)</h4>
+                    <p>今月の注文件数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h4>@Model.Where(s => s.SaleDate.Month == DateTime.Now.Month).SelectMany(s => s.Order.OrderItems).Sum(oi => oi.Quantity)</h4>
+                    <p>今月の販売数量</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>売上履歴</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>注文日</th>
+                                        <th>注文番号</th>
+                                        <th>商品詳細</th>
+                                        <th>総額</th>
+                                        <th>手数料</th>
+                                        <th>プラットフォーム料</th>
+                                        <th>精算状況</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var sale in Model.OrderByDescending(s => s.SaleDate))
+                                    {
+                                        <tr>
+                                            <td>@sale.SaleDate.ToString("yyyy/MM/dd")</td>
+                                            <td>@sale.Order.OrderNumber</td>
+                                            <td>
+                                                @foreach (var item in sale.Order.OrderItems)
+                                                {
+                                                    <div class="mb-1">
+                                                        @item.Product.Name × @item.Quantity
+                                                        <small class="text-muted">(¥@item.UnitPrice.ToString("N0"))</small>
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td>¥@sale.TotalAmount.ToString("N0")</td>
+                                            <td>¥@sale.DistributorCommission.ToString("N0")</td>
+                                            <td>¥@sale.PlatformFee.ToString("N0")</td>
+                                            <td>
+                                                @if (sale.IsSettled)
+                                                {
+                                                    <span class="badge bg-success">精算済み</span>
+                                                    @if (sale.SettlementDate.HasValue)
+                                                    {
+                                                        <br><small>@sale.SettlementDate.Value.ToString("MM/dd")</small>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">精算待ち</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h6>精算サマリー</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="border p-3">
+                                        <strong>精算済み総額</strong><br>
+                                        ¥@Model.Where(s => s.IsSettled).Sum(s => s.DistributorCommission).ToString("N0")
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border p-3">
+                                        <strong>精算待ち総額</strong><br>
+                                        ¥@Model.Where(s => !s.IsSettled).Sum(s => s.DistributorCommission).ToString("N0")
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border p-3">
+                                        <strong>次回精算予定日</strong><br>
+                                        @DateTime.Now.AddDays(15 - DateTime.Now.Day).ToString("yyyy/MM/dd")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>まだ売上がありません。</p>
+                        <p>QRコードを設置して商品の販売を開始してください。</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

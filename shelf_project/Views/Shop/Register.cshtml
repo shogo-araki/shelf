@@ -1,0 +1,91 @@
+@model shelf_project.ViewModels.ConsumerRegisterViewModel
+@{
+    ViewData["Title"] = "会員登録";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-shopping-cart"></i>
+                        会員登録
+                    </h3>
+                    <p class="mb-0 mt-2">Shelf Upでお買い物を始めましょう</p>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Register" method="post">
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="FirstName" class="form-label"></label>
+                                    <input asp-for="FirstName" class="form-control" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="LastName" class="form-label"></label>
+                                    <input asp-for="LastName" class="form-control" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" placeholder="example@email.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label"></label>
+                            <input asp-for="Password" class="form-control" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label"></label>
+                            <input asp-for="ConfirmPassword" class="form-control" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">会員特典</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li>✓ 購入履歴・配送状況の確認</li>
+                                    <li>✓ 商品レビューの投稿</li>
+                                    <li>✓ お得な情報をメール配信</li>
+                                    <li>✓ 代理店経由の特別価格商品</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-info btn-lg w-100 mb-3">会員登録</button>
+                    </form>
+
+                    <hr>
+                    
+                    <div class="text-center">
+                        <p>すでに会員の方は</p>
+                        <a asp-action="Login" class="btn btn-outline-info">ログイン</a>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            会員登録せずに <a asp-action="Index" class="text-decoration-none">商品を見る</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

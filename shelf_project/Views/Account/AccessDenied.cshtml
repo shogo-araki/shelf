@@ -1,0 +1,9 @@
+@{
+    ViewData["Title"] = "アクセス拒否";
+}
+
+<div class="text-center">
+    <h1 class="display-4 text-danger">@ViewData["Title"]</h1>
+    <p class="lead">このページにアクセスする権限がありません。</p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">ホームに戻る</a>
+</div>

@@ -1,0 +1,116 @@
+@model shelf_project.Models.Distributor
+@{
+    ViewData["Title"] = "詳細ダッシュボード";
+}
+
+<div class="container-fluid">
+    <h1>詳細ダッシュボード</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4>¥@ViewBag.MonthlySales.ToString("N0")</h4>
+                    <p>今月の売上</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4>¥@ViewBag.MonthlyCommission.ToString("N0")</h4>
+                    <p>今月の手数料</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h4>@(Model.Sales?.Count(s => s.SaleDate.Month == DateTime.Now.Month) ?? 0)</h4>
+                    <p>今月の注文数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h4>@(Model.DistributorProducts?.Count(dp => dp.IsActive) ?? 0)</h4>
+                    <p>取扱商品数</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>最近の売上</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Sales != null && Model.Sales.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>日付</th>
+                                        <th>商品</th>
+                                        <th>売上額</th>
+                                        <th>手数料</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var sale in Model.Sales.OrderByDescending(s => s.SaleDate).Take(10))
+                                    {
+                                        <tr>
+                                            <td>@sale.SaleDate.ToString("MM/dd")</td>
+                                            <td>
+                                                @foreach (var item in sale.Order.OrderItems)
+                                                {
+                                                    <div>@item.Product.Name (@item.Quantity 個)</div>
+                                                }
+                                            </td>
+                                            <td>¥@sale.TotalAmount.ToString("N0")</td>
+                                            <td>¥@sale.DistributorCommission.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>まだ売上がありません。</p>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>契約詳細</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>契約開始:</strong> @Model.ContractStartDate.ToString("yyyy/MM/dd")</p>
+                    <p><strong>次回更新:</strong> @Model.ContractStartDate.AddYears(1).ToString("yyyy/MM/dd")</p>
+                    <p><strong>月額基本料:</strong> ¥@Model.MonthlyFee.ToString("N0")</p>
+                    <p><strong>選定商品数:</strong> @Model.ProductSelectionCount 商品</p>
+                    <p><strong>設置棚数:</strong> @Model.ShelfCount 台</p>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>今月のサンプル配布</h5>
+                </div>
+                <div class="card-body">
+                    <p>次回配布予定: @DateTime.Now.AddDays(5).ToString("MM/dd")</p>
+                    <p>配布商品数: @(Model.DistributorProducts?.Count(dp => dp.IsActive) ?? 0) 商品</p>
+                    <a href="#" class="btn btn-sm btn-outline-primary">追加注文</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

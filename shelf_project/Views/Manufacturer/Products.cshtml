@@ -1,0 +1,149 @@
+@model IEnumerable<shelf_project.Models.Product>
+@{
+    ViewData["Title"] = "商品管理";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>商品管理</h1>
+        <a href="@Url.Action("CreateProduct")" class="btn btn-primary">新商品登録</a>
+    </div>
+    
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var product in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover;">
+                        }
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text flex-grow-1">
+                                @if (!string.IsNullOrEmpty(product.Description))
+                                {
+                                    @product.Description.Substring(0, Math.Min(100, product.Description.Length))@(product.Description.Length > 100 ? "..." : "")
+                                }
+                            </p>
+                            
+                            <div class="mb-2">
+                                <strong>卸価格:</strong> ¥@product.WholesalePrice.ToString("N0")<br>
+                                <strong>販売価格:</strong> ¥@product.RetailPrice.ToString("N0")<br>
+                                <strong>利益率:</strong> @(((product.RetailPrice - product.WholesalePrice) / product.RetailPrice * 100).ToString("F1"))%
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong>在庫:</strong>
+                                <span class="stock-display" data-product-id="@product.Id">
+                                    @if (product.StockQuantity == 0)
+                                    {
+                                        <span class="badge bg-danger">@product.StockQuantity</span>
+                                    }
+                                    else if (product.StockQuantity <= 10)
+                                    {
+                                        <span class="badge bg-warning">@product.StockQuantity</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">@product.StockQuantity</span>
+                                    }
+                                </span>
+                                
+                                <div class="input-group mt-2" style="font-size: 0.875rem;">
+                                    <input type="number" class="form-control form-control-sm stock-input" data-product-id="@product.Id" value="@product.StockQuantity" min="0">
+                                    <button class="btn btn-outline-secondary btn-sm update-stock-btn" data-product-id="@product.Id">更新</button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>ステータス:</strong>
+                                @if (product.IsActive)
+                                {
+                                    <span class="badge bg-success">販売中</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">非公開</span>
+                                }
+                                
+                                @if (product.RequiresRefrigeration || product.RequiresFreezing)
+                                {
+                                    <span class="badge bg-info">
+                                        @(product.RequiresFreezing ? "冷凍" : "冷蔵")
+                                    </span>
+                                }
+                            </div>
+                            
+                            <div class="mt-auto">
+                                <a href="@Url.Action("EditProduct", new { id = product.Id })" class="btn btn-primary btn-sm">編集</a>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted">
+                                登録日: @product.CreatedAt.ToString("yyyy/MM/dd")
+                                @if (product.UpdatedAt.HasValue)
+                                {
+                                    <br />
+                                    <text>更新日: @product.UpdatedAt.Value.ToString("yyyy/MM/dd")</text>
+                                }
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center">
+            <h3>まだ商品が登録されていません</h3>
+            <p>新しい商品を登録して販売を開始しましょう。</p>
+            <a href="@Url.Action("CreateProduct")" class="btn btn-primary btn-lg">最初の商品を登録</a>
+        </div>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@section Scripts {
+<script>
+$(document).ready(function() {
+    $('.update-stock-btn').click(function() {
+        var productId = $(this).data('product-id');
+        var stockQuantity = $('.stock-input[data-product-id="' + productId + '"]').val();
+        
+        $.post('@Url.Action("UpdateStock")', {
+            productId: productId,
+            stockQuantity: stockQuantity
+        }, function(response) {
+            if (response.success) {
+                var badge;
+                if (stockQuantity == 0) {
+                    badge = '<span class="badge bg-danger">' + stockQuantity + '</span>';
+                } else if (stockQuantity <= 10) {
+                    badge = '<span class="badge bg-warning">' + stockQuantity + '</span>';
+                } else {
+                    badge = '<span class="badge bg-success">' + stockQuantity + '</span>';
+                }
+                $('.stock-display[data-product-id="' + productId + '"]').html(badge);
+                
+                // Show success message
+                $('<div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">在庫を更新しました<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>')
+                    .appendTo('body').delay(3000).fadeOut();
+            } else {
+                alert('在庫の更新に失敗しました。');
+            }
+        });
+    });
+});
+</script>
+}
