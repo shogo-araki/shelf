@@ -231,6 +231,56 @@ namespace shelf_project.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("shelf_project.Models.Company", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CompanyType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("HeadOfficeCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("HeadquartersAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OwnerUserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.ToTable("Companies");
+                });
+
             modelBuilder.Entity("shelf_project.Models.Distributor", b =>
                 {
                     b.Property<int>("Id")
@@ -240,6 +290,9 @@ namespace shelf_project.Migrations
                     b.Property<string>("Address")
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
@@ -255,11 +308,24 @@ namespace shelf_project.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("DistributorType")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsHeadquarters")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LocationName")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("MonthlyFee")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ParentDistributorId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(20)
@@ -279,6 +345,10 @@ namespace shelf_project.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("ParentDistributorId");
 
                     b.HasIndex("UserId");
 
@@ -367,6 +437,10 @@ namespace shelf_project.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CompanyDescription")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("CompanyName")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -377,6 +451,13 @@ namespace shelf_project.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("EstablishedYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Industry")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -391,6 +472,10 @@ namespace shelf_project.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -598,6 +683,9 @@ namespace shelf_project.Migrations
                     b.Property<int>("DistributorId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("DistributorId1")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
@@ -618,7 +706,46 @@ namespace shelf_project.Migrations
 
                     b.HasIndex("DistributorId");
 
+                    b.HasIndex("DistributorId1")
+                        .IsUnique();
+
                     b.ToTable("QRCodes");
+                });
+
+            modelBuilder.Entity("shelf_project.Models.QRCodeProduct", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("QRCodeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("RemovedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("QRCodeId");
+
+                    b.ToTable("QRCodeProducts");
                 });
 
             modelBuilder.Entity("shelf_project.Models.Review", b =>
@@ -859,13 +986,38 @@ namespace shelf_project.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("shelf_project.Models.Company", b =>
+                {
+                    b.HasOne("shelf_project.Models.ApplicationUser", "OwnerUser")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OwnerUser");
+                });
+
             modelBuilder.Entity("shelf_project.Models.Distributor", b =>
                 {
+                    b.HasOne("shelf_project.Models.Company", "Company")
+                        .WithMany("Distributors")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("shelf_project.Models.Distributor", "ParentDistributor")
+                        .WithMany("ChildDistributors")
+                        .HasForeignKey("ParentDistributorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("shelf_project.Models.ApplicationUser", "User")
                         .WithMany("Distributors")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("ParentDistributor");
 
                     b.Navigation("User");
                 });
@@ -967,7 +1119,30 @@ namespace shelf_project.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("shelf_project.Models.Distributor", null)
+                        .WithOne("PrimaryQRCode")
+                        .HasForeignKey("shelf_project.Models.QRCode", "DistributorId1");
+
                     b.Navigation("Distributor");
+                });
+
+            modelBuilder.Entity("shelf_project.Models.QRCodeProduct", b =>
+                {
+                    b.HasOne("shelf_project.Models.Product", "Product")
+                        .WithMany("QRCodeProducts")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("shelf_project.Models.QRCode", "QRCode")
+                        .WithMany("QRCodeProducts")
+                        .HasForeignKey("QRCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("QRCode");
                 });
 
             modelBuilder.Entity("shelf_project.Models.Review", b =>
@@ -1058,9 +1233,18 @@ namespace shelf_project.Migrations
                     b.Navigation("Manufacturers");
                 });
 
+            modelBuilder.Entity("shelf_project.Models.Company", b =>
+                {
+                    b.Navigation("Distributors");
+                });
+
             modelBuilder.Entity("shelf_project.Models.Distributor", b =>
                 {
+                    b.Navigation("ChildDistributors");
+
                     b.Navigation("DistributorProducts");
+
+                    b.Navigation("PrimaryQRCode");
 
                     b.Navigation("QRCodes");
 
@@ -1087,6 +1271,8 @@ namespace shelf_project.Migrations
 
                     b.Navigation("OrderItems");
 
+                    b.Navigation("QRCodeProducts");
+
                     b.Navigation("Reviews");
 
                     b.Navigation("SampleOrders");
@@ -1094,6 +1280,8 @@ namespace shelf_project.Migrations
 
             modelBuilder.Entity("shelf_project.Models.QRCode", b =>
                 {
+                    b.Navigation("QRCodeProducts");
+
                     b.Navigation("Sales");
                 });
 #pragma warning restore 612, 618

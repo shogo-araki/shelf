@@ -1,0 +1,97 @@
+@model IEnumerable<shelf_project.Models.Manufacturer>
+@{
+    ViewData["Title"] = "メーカー一覧";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>メーカー一覧</h1>
+        <a asp-action="Products" class="btn btn-secondary">商品一覧に戻る</a>
+    </div>
+    
+    <div class="row">
+        @foreach (var manufacturer in Model)
+        {
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@manufacturer.CompanyName</h5>
+                        
+                        @if (!string.IsNullOrEmpty(manufacturer.Industry))
+                        {
+                            <span class="badge bg-primary mb-2">@manufacturer.Industry</span>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(manufacturer.CompanyDescription))
+                        {
+                            <p class="card-text text-muted">
+                                @(manufacturer.CompanyDescription.Length > 150 
+                                    ? manufacturer.CompanyDescription.Substring(0, 150) + "..." 
+                                    : manufacturer.CompanyDescription)
+                            </p>
+                        }
+                        
+                        <div class="row text-muted small mb-3">
+                            @if (manufacturer.EstablishedYear > 0)
+                            {
+                                <div class="col-6">
+                                    <i class="bi bi-calendar"></i> 設立: @(manufacturer.EstablishedYear)年
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(manufacturer.Address))
+                            {
+                                <div class="col-6">
+                                    <i class="bi bi-geo-alt"></i> @manufacturer.Address
+                                </div>
+                            }
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(manufacturer.Website))
+                        {
+                            <div class="mb-3">
+                                <a href="@manufacturer.Website" target="_blank" class="text-decoration-none small">
+                                    <i class="bi bi-globe"></i> ウェブサイト
+                                </a>
+                            </div>
+                        }
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-muted">
+                                商品数: @(manufacturer.Products?.Count(p => p.IsActive) ?? 0)
+                            </small>
+                            <div>
+                                <a asp-action="ManufacturerProducts" asp-route-manufacturerId="@manufacturer.Id" 
+                                   class="btn btn-outline-primary btn-sm me-2">
+                                    商品を見る
+                                </a>
+                                <a asp-action="Products" asp-route-manufacturerId="@manufacturer.Id" 
+                                   class="btn btn-primary btn-sm">
+                                    商品を選ぶ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <h4 class="text-muted">メーカーが登録されていません</h4>
+            <p class="text-muted">現在、商品を提供しているメーカーはありません。</p>
+        </div>
+    }
+</div>
+
+<style>
+    .card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .bi {
+        margin-right: 4px;
+    }
+</style>

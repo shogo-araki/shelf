@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
     <PackageReference Include="Stripe.net" Version="44.13.0" />
     <PackageReference Include="QRCoder" Version="1.4.3" />
     <PackageReference Include="AutoMapper" Version="12.0.1" />

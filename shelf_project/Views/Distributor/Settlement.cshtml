@@ -1,0 +1,207 @@
+@model shelf_project.Models.Distributor
+@{
+    ViewData["Title"] = "売上清算";
+    var sales = ViewBag.Sales as List<shelf_project.Models.Sale> ?? new List<shelf_project.Models.Sale>();
+    var totalRevenue = ViewBag.TotalRevenue as decimal? ?? 0;
+    var totalCommission = ViewBag.TotalCommission as decimal? ?? 0;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>売上清算</h1>
+    </div>
+
+    <!-- Company Info -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5><i class="bi bi-building"></i> 代理店情報</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>代理店名:</strong><br>
+                    <span class="text-muted">@Model.CompanyName</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>契約開始日:</strong><br>
+                    <span class="text-muted">@Model.ContractStartDate.ToString("yyyy年MM月dd日")</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>月額契約料:</strong><br>
+                    <span class="text-muted">¥@Model.MonthlyFee.ToString("N0")</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>契約状態:</strong><br>
+                    <span class="badge @(Model.IsActive ? "bg-success" : "bg-secondary")">
+                        @(Model.IsActive ? "有効" : "無効")
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Summary -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h2 class="text-success">¥@totalRevenue.ToString("N0")</h2>
+                    <p class="card-text">総売上金額</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h2 class="text-info">¥@totalCommission.ToString("N0")</h2>
+                    <p class="card-text">代理店コミッション</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h2 class="text-primary">@sales.Count</h2>
+                    <p class="card-text">売上件数</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Sales Chart -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>月別売上推移</h5>
+        </div>
+        <div class="card-body">
+            @{
+                var monthlySales = sales.GroupBy(s => new { s.SaleDate.Year, s.SaleDate.Month })
+                                      .Select(g => new { 
+                                          Month = $"{g.Key.Year}/{g.Key.Month:00}", 
+                                          Revenue = g.Sum(s => s.TotalAmount),
+                                          Commission = g.Sum(s => s.DistributorCommission)
+                                      })
+                                      .OrderBy(x => x.Month)
+                                      .ToList();
+            }
+            
+            @if (monthlySales.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>月</th>
+                                <th class="text-end">売上金額</th>
+                                <th class="text-end">コミッション</th>
+                                <th class="text-end">コミッション率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var month in monthlySales)
+                            {
+                                <tr>
+                                    <td>@month.Month</td>
+                                    <td class="text-end">¥@month.Revenue.ToString("N0")</td>
+                                    <td class="text-end">¥@month.Commission.ToString("N0")</td>
+                                    <td class="text-end">@((month.Revenue > 0 ? (month.Commission / month.Revenue * 100) : 0).ToString("F1"))%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-3">
+                    <i class="bi bi-graph-up display-4 text-muted"></i>
+                    <h5 class="mt-3 text-muted">売上データがありません</h5>
+                    <p class="text-muted">売上が発生すると、ここに月別の推移が表示されます。</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Sales -->
+    <div class="card">
+        <div class="card-header">
+            <h5>最近の売上履歴</h5>
+        </div>
+        <div class="card-body">
+            @if (sales.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>売上日</th>
+                                <th>注文ID</th>
+                                <th class="text-end">売上金額</th>
+                                <th class="text-end">コミッション</th>
+                                <th>清算状況</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sale in sales.OrderByDescending(s => s.SaleDate).Take(20))
+                            {
+                                <tr>
+                                    <td>@sale.SaleDate.ToString("yyyy/MM/dd HH:mm")</td>
+                                    <td><code>@sale.OrderId</code></td>
+                                    <td class="text-end">¥@sale.TotalAmount.ToString("N0")</td>
+                                    <td class="text-end">¥@sale.DistributorCommission.ToString("N0")</td>
+                                    <td>
+                                        <span class="badge @(sale.IsSettled ? "bg-success" : "bg-warning")">
+                                            @(sale.IsSettled ? "清算済み" : "未清算")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                @if (sales.Count > 20)
+                {
+                    <div class="text-center mt-3">
+                        <small class="text-muted">直近20件を表示中（全@sales.Count件）</small>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-receipt display-1 text-muted"></i>
+                    <h4 class="mt-3 text-muted">売上履歴がありません</h4>
+                    <p class="text-muted">QRコード経由での売上が発生すると、ここに履歴が表示されます。</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Settlement Info -->
+    <div class="alert alert-info mt-4">
+        <h6><i class="bi bi-info-circle"></i> 清算について</h6>
+        <ul class="mb-0">
+            <li><strong>個別清算:</strong> 各代理店の売上は個別に管理・清算されます</li>
+            <li><strong>コミッション:</strong> 売上に応じてコミッションが計算されます</li>
+            <li><strong>月額契約料:</strong> 毎月@Model.MonthlyFee.ToString("N0")円の契約料が発生します</li>
+            <li><strong>清算サイクル:</strong> 月末締め、翌月末支払いとなります</li>
+        </ul>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}

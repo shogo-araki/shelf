@@ -4,34 +4,55 @@
 }
 
 <div class="container-fluid">
-    <h1>代理店ダッシュボード</h1>
-    
+    <!-- ヘッダー部分 -->
     <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>契約情報</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>会社名:</strong> @Model.CompanyName</p>
-                            <p><strong>契約開始日:</strong> @Model.ContractStartDate.ToString("yyyy/MM/dd")</p>
-                            <p><strong>月額料金:</strong> ¥@Model.MonthlyFee.ToString("N0")</p>
+        <div class="col-12">
+            <div class="bg-white rounded-3 shadow-sm p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        @if (Model.Company?.CompanyType == CompanyType.Chain && Model.DistributorType == DistributorType.Store)
+                        {
+                            <!-- チェーン店の支店: 店舗名をh1に、チェーン会社名をその下に -->
+                            <h1 class="h3 mb-1 text-primary">
+                                <i class="bi bi-shop-window"></i> @(Model.LocationName ?? Model.CompanyName)
+                            </h1>
+                            <p class="text-muted mb-2">@Model.Company.CompanyName</p>
+                        }
+                        else
+                        {
+                            <!-- 独立代理店またはチェーンの本社: 会社名をそのまま表示 -->
+                            <h1 class="h3 mb-2 text-primary">
+                                <i class="bi bi-shop-window"></i> @Model.CompanyName
+                            </h1>
+                        }
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrEmpty(Model.LocationName) && !(Model.Company?.CompanyType == CompanyType.Chain && Model.DistributorType == DistributorType.Store))
+                            {
+                                <span class="text-muted">
+                                    <i class="bi bi-geo-alt-fill"></i> @Model.LocationName
+                                </span>
+                            }
+                            <span class="badge rounded-pill @(Model.DistributorType == DistributorType.HeadOffice ? "bg-primary" : "bg-info")">
+                                @(Model.DistributorType == DistributorType.HeadOffice ? "本社" : "店舗")
+                            </span>
+                            @if (Model.Company?.CompanyType == CompanyType.Chain)
+                            {
+                                <span class="badge rounded-pill bg-success">チェーン店</span>
+                            }
                         </div>
-                        <div class="col-md-6">
-                            <p><strong>棚数:</strong> @Model.ShelfCount 台</p>
-                            <p><strong>商品選定数:</strong> @Model.ProductSelectionCount 商品</p>
-                            <p><strong>ステータス:</strong> 
-                                @if(Model.IsActive)
-                                {
-                                    <span class="badge bg-success">アクティブ</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">非アクティブ</span>
-                                }
-                            </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group" role="group">
+                            @if (Model.Company != null && Model.Company.CompanyType == CompanyType.Chain && Model.DistributorType == DistributorType.HeadOffice)
+                            {
+                                <a href="@Url.Action("Locations", "Company")" class="btn btn-primary">
+                                    <i class="bi bi-building-gear"></i> チェーン店管理
+                                </a>
+                            }
+                            <a href="@Url.Action("Settings")" class="btn btn-outline-secondary">
+                                <i class="bi bi-gear"></i> 設定
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -39,53 +60,211 @@
         </div>
     </div>
     
-    <div class="row">
+    <!-- 統計情報カード -->
+    <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5>今月の売上</h5>
-                    <h3>¥@((ViewBag.MonthlySales ?? 0m).ToString("N0"))</h3>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-currency-yen fs-2 text-primary"></i>
+                        </div>
+                    </div>
+                    <h6 class="text-muted mb-1">今月の売上</h6>
+                    <h4 class="text-primary mb-0">¥@((ViewBag.MonthlySales ?? 0m).ToString("N0"))</h4>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5>今月の手数料</h5>
-                    <h3>¥@((ViewBag.MonthlyCommission ?? 0m).ToString("N0"))</h3>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-wallet2 fs-2 text-success"></i>
+                        </div>
+                    </div>
+                    <h6 class="text-muted mb-1">今月の手数料</h6>
+                    <h4 class="text-success mb-0">¥@((ViewBag.MonthlyCommission ?? 0m).ToString("N0"))</h4>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5>選定商品数</h5>
-                    <h3>@(Model.DistributorProducts?.Count(dp => dp.IsActive) ?? 0) / @Model.ProductSelectionCount</h3>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-box-seam fs-2 text-info"></i>
+                        </div>
+                    </div>
+                    <h6 class="text-muted mb-1">選定商品数</h6>
+                    <h4 class="text-info mb-0">
+                        @(Model.DistributorProducts?.Count(dp => dp.IsActive) ?? 0) / @Model.EffectiveProductSelectionCount
+                    </h4>
+                    <small class="text-muted">商品</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-warning text-white">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-grid-3x3-gap fs-2 text-warning"></i>
+                        </div>
+                    </div>
+                    <h6 class="text-muted mb-1">設置棚数</h6>
+                    <h4 class="text-warning mb-0">@Model.ShelfCount</h4>
+                    <small class="text-muted">台</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 契約情報 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0"><i class="bi bi-file-earmark-text"></i> 契約情報</h6>
+                </div>
                 <div class="card-body">
-                    <h5>設置棚数</h5>
-                    <h3>@Model.ShelfCount 台</h3>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">契約開始日</label>
+                                <div class="fw-semibold">@Model.ContractStartDate.ToString("yyyy年MM月dd日")</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">月額料金</label>
+                                <div class="fw-semibold">¥@Model.MonthlyFee.ToString("N0")</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">商品選定上限</label>
+                                <div class="fw-semibold">@Model.EffectiveProductSelectionCount 商品</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">ステータス</label>
+                                <div>
+                                    @if(Model.IsActive)
+                                    {
+                                        <span class="badge bg-success rounded-pill">
+                                            <i class="bi bi-check-circle"></i> アクティブ
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger rounded-pill">
+                                            <i class="bi bi-x-circle"></i> 非アクティブ
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>クイックアクション</h5>
+    <!-- クイックアクション -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0"><i class="bi bi-lightning"></i> よく使う操作</h6>
                 </div>
                 <div class="card-body">
-                    <a href="@Url.Action("Products")" class="btn btn-primary me-2">商品管理</a>
-                    <a href="@Url.Action("Sales")" class="btn btn-info me-2">売上確認</a>
-                    <a href="@Url.Action("Dashboard")" class="btn btn-success me-2">詳細ダッシュボード</a>
+                    <div class="row g-3">
+                        <!-- 主要操作 -->
+                        <div class="col-md-4">
+                            <a href="@Url.Action("Products")" class="text-decoration-none">
+                                <div class="card h-100 border-primary border-opacity-25 hover-shadow">
+                                    <div class="card-body text-center">
+                                        <div class="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-box-seam fs-4 text-primary"></i>
+                                        </div>
+                                        <h6 class="card-title text-primary">商品管理</h6>
+                                        <p class="card-text text-muted small">商品の選定・変更</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="@Url.Action("QRCodes", new { locationId = Model.Id })" class="text-decoration-none">
+                                <div class="card h-100 border-secondary border-opacity-25 hover-shadow">
+                                    <div class="card-body text-center">
+                                        <div class="bg-secondary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-qr-code fs-4 text-secondary"></i>
+                                        </div>
+                                        <h6 class="card-title text-secondary">QRコード</h6>
+                                        <p class="card-text text-muted small">QRコード生成・管理</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="@Url.Action("Sales", new { locationId = Model.Id })" class="text-decoration-none">
+                                <div class="card h-100 border-info border-opacity-25 hover-shadow">
+                                    <div class="card-body text-center">
+                                        <div class="bg-info bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-graph-up fs-4 text-info"></i>
+                                        </div>
+                                        <h6 class="card-title text-info">売上確認</h6>
+                                        <p class="card-text text-muted small">売上レポート・分析</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <!-- 追加操作 -->
+                        <div class="col-md-4">
+                            <a href="@Url.Action("Settlement")" class="text-decoration-none">
+                                <div class="card h-100 border-success border-opacity-25 hover-shadow">
+                                    <div class="card-body text-center">
+                                        <div class="bg-success bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-calculator fs-4 text-success"></i>
+                                        </div>
+                                        <h6 class="card-title text-success">売上清算</h6>
+                                        <p class="card-text text-muted small">清算・支払い管理</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="@Url.Action("Settings")" class="text-decoration-none">
+                                <div class="card h-100 border-dark border-opacity-25 hover-shadow">
+                                    <div class="card-body text-center">
+                                        <div class="bg-dark bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-gear fs-4 text-dark"></i>
+                                        </div>
+                                        <h6 class="card-title text-dark">設定</h6>
+                                        <p class="card-text text-muted small">アカウント・契約設定</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .bg-opacity-10 {
+        background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+    }
+</style>
+

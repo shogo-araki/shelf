@@ -1,0 +1,225 @@
+@model shelf_project.Models.Distributor
+@{
+    ViewData["Title"] = "拠点管理";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>拠点管理</h1>
+    </div>
+
+    <!-- Add New Location -->
+    @if (Model.IsHeadquarters)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>新しい拠点を追加</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="AddLocation" method="post">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="locationName" class="form-label">拠点名 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="locationName" name="locationName" 
+                                       placeholder="例: 渋谷店、新宿店、横浜店など" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="address" class="form-label">住所</label>
+                                <input type="text" class="form-control" id="address" name="address" 
+                                       placeholder="〒000-0000 東京都...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="phoneNumber" class="form-label">電話番号</label>
+                                <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" 
+                                       placeholder="03-0000-0000">
+                            </div>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-plus-circle"></i> 追加
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    <!-- Locations List -->
+    <div class="card">
+        <div class="card-header">
+            <h5>
+                @if (Model.IsHeadquarters)
+                {
+                    <span>本社・拠点一覧</span>
+                }
+                else
+                {
+                    <span>所属拠点情報</span>
+                }
+            </h5>
+        </div>
+        <div class="card-body">
+            <!-- Headquarters -->
+            @if (Model.IsHeadquarters)
+            {
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <strong><i class="bi bi-building"></i> 本社: @Model.CompanyName</strong>
+                                <span class="badge bg-light text-primary">本社</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>住所:</strong><br>
+                                        <span class="text-muted">@(Model.Address ?? "未設定")</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>電話番号:</strong><br>
+                                        <span class="text-muted">@(Model.PhoneNumber ?? "未設定")</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>QRコード数:</strong><br>
+                                        <span class="text-muted">@(Model.QRCodes?.Count ?? 0) 個</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <a href="@Url.Action("QRCodes")" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-qr-code"></i> QR管理
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Child Locations -->
+                @if (Model.ChildDistributors != null && Model.ChildDistributors.Any())
+                {
+                    <h6 class="mb-3">拠点一覧</h6>
+                    <div class="row">
+                        @foreach (var location in Model.ChildDistributors)
+                        {
+                            <div class="col-lg-6 col-md-12 mb-3">
+                                <div class="card border-secondary">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <strong><i class="bi bi-geo-alt"></i> @location.LocationName</strong>
+                                        <span class="badge @(location.IsActive ? "bg-success" : "bg-secondary")">
+                                            @(location.IsActive ? "有効" : "無効")
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong>住所:</strong><br>
+                                                <small class="text-muted">@(location.Address ?? "未設定")</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>電話番号:</strong><br>
+                                                <small class="text-muted">@(location.PhoneNumber ?? "未設定")</small>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-6">
+                                                <strong>QRコード数:</strong><br>
+                                                <small class="text-muted">@(location.QRCodes?.Count ?? 0) 個</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>作成日:</strong><br>
+                                                <small class="text-muted">@location.CreatedAt.ToString("yyyy/MM/dd")</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-3">
+                        <i class="bi bi-geo-alt display-4 text-muted"></i>
+                        <h5 class="mt-3 text-muted">拠点がありません</h5>
+                        <p class="text-muted">チェーン店など複数拠点がある場合は、上のフォームから拠点を追加してください。</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <!-- Single Location View -->
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <strong><i class="bi bi-geo-alt"></i> @Model.LocationName</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>所属会社:</strong><br>
+                                <span class="text-muted">@Model.CompanyName</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>拠点種別:</strong><br>
+                                <span class="text-muted">@(Model.IsHeadquarters ? "本社" : "支店・拠点")</span>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <strong>住所:</strong><br>
+                                <span class="text-muted">@(Model.Address ?? "未設定")</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>電話番号:</strong><br>
+                                <span class="text-muted">@(Model.PhoneNumber ?? "未設定")</span>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <strong>QRコード数:</strong><br>
+                                <span class="text-muted">@(Model.QRCodes?.Count ?? 0) 個</span>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="@Url.Action("QRCodes")" class="btn btn-outline-primary">
+                                    <i class="bi bi-qr-code"></i> QRコード管理
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="alert alert-info mt-4">
+        <h6><i class="bi bi-info-circle"></i> 拠点管理について</h6>
+        <ul class="mb-0">
+            <li>チェーン店など複数拠点がある場合、それぞれの拠点で個別のQRコードを管理できます</li>
+            <li>売上の集計・清算は会社単位で行われます</li>
+            <li>各拠点のQRコード経由の売上は、自動的に会社全体の実績に統合されます</li>
+            <li>拠点追加による追加料金はありません（基本契約料金に含まれています）</li>
+        </ul>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}

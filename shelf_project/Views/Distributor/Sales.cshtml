@@ -1,10 +1,49 @@
 @model IEnumerable<shelf_project.Models.Sale>
 @{
     ViewData["Title"] = "売上確認";
+    var selectedDistributor = ViewBag.SelectedDistributor as shelf_project.Models.Distributor;
+    var allDistributors = ViewBag.AllDistributors as List<shelf_project.Models.Distributor>;
 }
 
 <div class="container-fluid">
-    <h1>売上確認</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>売上確認</h1>
+    </div>
+
+    <!-- Location Selector -->
+    @if (allDistributors != null && allDistributors.Count > 1)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-geo-alt"></i> 拠点選択</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var distributor in allDistributors)
+                    {
+                        <div class="col-md-3 mb-2">
+                            <a href="@Url.Action("Sales", new { locationId = distributor.Id })" 
+                               class="btn @(selectedDistributor?.Id == distributor.Id ? "btn-primary" : "btn-outline-primary") w-100">
+                                <i class="bi bi-building"></i> @distributor.CompanyName
+                                @if (distributor.LocationName != null)
+                                {
+                                    <br><small>@distributor.LocationName</small>
+                                }
+                            </a>
+                        </div>
+                    }
+                </div>
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>現在表示中の拠点:</strong> @selectedDistributor?.CompanyName
+                    @if (selectedDistributor?.LocationName != null)
+                    {
+                        <span>(@selectedDistributor.LocationName)</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
     
     <div class="row mb-4">
         <div class="col-md-3">

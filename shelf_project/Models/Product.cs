@@ -62,5 +62,7 @@ namespace shelf_project.Models
         public virtual ICollection<Review>? Reviews { get; set; }
 
         public virtual ICollection<SampleOrder>? SampleOrders { get; set; }
+
+        public virtual ICollection<QRCodeProduct>? QRCodeProducts { get; set; }
     }
 }

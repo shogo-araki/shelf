@@ -1,0 +1,438 @@
+@{
+    ViewData["Title"] = "新規契約";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <!-- ヘッダー -->
+            <div class="text-center mb-5">
+                <div class="bg-primary bg-opacity-10 rounded-circle p-4 mx-auto mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
+                </div>
+                <h1 class="h3 text-primary mb-2">ShelfUp 代理店契約</h1>
+                <p class="text-muted">新規代理店契約の申込みを行います</p>
+            </div>
+
+            <!-- 進行ステップ -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="d-flex justify-content-center">
+                        <div class="d-flex align-items-center">
+                            <div class="step-item active">
+                                <div class="step-circle">1</div>
+                                <div class="step-label">契約タイプ選択</div>
+                            </div>
+                            <div class="step-line"></div>
+                            <div class="step-item">
+                                <div class="step-circle">2</div>
+                                <div class="step-label">基本情報入力</div>
+                            </div>
+                            <div class="step-line"></div>
+                            <div class="step-item">
+                                <div class="step-circle">3</div>
+                                <div class="step-label">契約完了</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="NewContract" method="post">
+                <!-- 契約タイプ選択 -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0"><i class="bi bi-list-check"></i> ステップ1: 契約タイプを選択</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="contract-type-card" onclick="selectContractType('independent')">
+                                    <div class="card h-100 border-2 border-primary border-opacity-25">
+                                        <div class="card-body text-center p-4">
+                                            <div class="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                                <i class="bi bi-shop fs-4 text-primary"></i>
+                                            </div>
+                                            <h5 class="text-primary mb-3">独立代理店</h5>
+                                            <p class="text-muted mb-3">1つの店舗で独立して運営</p>
+                                            <ul class="list-unstyled text-start">
+                                                <li><i class="bi bi-check-circle text-success me-2"></i>即座に開始可能</li>
+                                                <li><i class="bi bi-check-circle text-success me-2"></i>完全独立運営</li>
+                                                <li><i class="bi bi-check-circle text-success me-2"></i>本社コード自動生成</li>
+                                                <li><i class="bi bi-check-circle text-success me-2"></i>将来的にチェーン化可能</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="contract-type-card" onclick="selectContractType('chain')">
+                                    <div class="card h-100 border-2 border-success border-opacity-25">
+                                        <div class="card-body text-center p-4">
+                                            <div class="bg-success bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                                <i class="bi bi-building fs-4 text-success"></i>
+                                            </div>
+                                            <h5 class="text-success mb-3">チェーン店参加</h5>
+                                            <p class="text-muted mb-3">既存チェーンの支店として参加</p>
+                                            <ul class="list-unstyled text-start">
+                                                <li><i class="bi bi-check-circle text-success me-2"></i>本社から管理・サポート</li>
+                                                <li><i class="bi bi-check-circle text-success me-2"></i>統合された運営</li>
+                                                <li><i class="bi bi-check-circle text-success me-2"></i>ブランド活用</li>
+                                                <li><i class="bi bi-check-circle text-success me-2"></i>本社コード必要</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 本社コード入力（チェーン店選択時に表示） -->
+                        <div class="mt-4" id="headOfficeCodeSection" style="display: none;">
+                            <div class="alert alert-info">
+                                <h6><i class="bi bi-info-circle"></i> 本社コードが必要です</h6>
+                                <p class="mb-3">チェーン店に参加するには、本社から提供された本社コードが必要です。</p>
+                                <div class="form-group">
+                                    <label for="headOfficeCode" class="form-label fw-semibold">本社コード</label>
+                                    <input type="text" class="form-control form-control-lg" id="headOfficeCode" name="headOfficeCode" 
+                                           placeholder="8桁の本社コードを入力してください">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 基本情報 -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0"><i class="bi bi-pencil"></i> ステップ2: 基本情報の入力</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="companyName" name="companyName" 
+                                           placeholder="会社名" required>
+                                    <label for="companyName">会社名 <span class="text-danger">*</span></label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> 例: 株式会社サンプル、○○商店
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="locationName" name="locationName" 
+                                           placeholder="拠点名" required>
+                                    <label for="locationName">拠点名 <span class="text-danger">*</span></label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> 例: 本店、渋谷店、1号店
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-4 mt-2">
+                            <div class="col-md-8">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="address" name="address" 
+                                           placeholder="住所">
+                                    <label for="address">住所</label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-geo-alt"></i> 例: 東京都渋谷区渋谷1-1-1 サンプルビル3F
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" 
+                                           placeholder="電話番号">
+                                    <label for="phoneNumber">電話番号</label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-telephone"></i> 例: 03-1234-5678
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 契約プラン情報 -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0"><i class="bi bi-cart"></i> 契約プラン詳細</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="text-center p-4 bg-primary bg-opacity-10 rounded-3 h-100">
+                                    <i class="bi bi-currency-yen fs-3 text-primary mb-2"></i>
+                                    <div class="h4 text-primary mb-1">¥3,980</div>
+                                    <div class="text-muted">月額料金（税込）</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-4 bg-success bg-opacity-10 rounded-3 h-100">
+                                    <i class="bi bi-box-seam fs-3 text-success mb-2"></i>
+                                    <div class="h4 text-success mb-1">5商品</div>
+                                    <div class="text-muted">選定可能商品数</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-4 bg-info bg-opacity-10 rounded-3 h-100">
+                                    <i class="bi bi-grid-3x3-gap fs-3 text-info mb-2"></i>
+                                    <div class="h4 text-info mb-1">1台</div>
+                                    <div class="text-muted">設置可能棚数</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-light rounded-3">
+                            <h6 class="text-dark mb-2"><i class="bi bi-star"></i> プランに含まれるサービス</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled small">
+                                        <li><i class="bi bi-check text-success me-2"></i>商品選定サポート</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>QRコード生成・管理</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>売上レポート機能</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled small">
+                                        <li><i class="bi bi-check text-success me-2"></i>24時間サポート</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>手数料自動計算</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>オンライン決済対応</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 重要事項 -->
+                <div class="alert alert-warning border-0">
+                    <h6><i class="bi bi-shield-exclamation"></i> 契約に関する重要事項</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="mb-0 small">
+                                <li>月額料金は契約開始日から発生します</li>
+                                <li>最低契約期間は6ヶ月です</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="mb-0 small">
+                                <li>契約後の変更には別途手続きが必要です</li>
+                                <li>解約は1ヶ月前の通知が必要です</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- アクションボタン -->
+                <div class="d-flex justify-content-between align-items-center pt-3">
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left"></i> 戻る
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn" disabled>
+                        <i class="bi bi-check-circle"></i> 契約を完了する
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<script>
+    let selectedContractType = null;
+    
+    function selectContractType(type) {
+        // 選択状態をリセット
+        document.querySelectorAll('.contract-type-card .card').forEach(card => {
+            card.classList.remove('border-primary', 'border-success', 'border-3');
+            card.classList.add('border-opacity-25', 'border-2');
+        });
+        
+        // 選択されたタイプをハイライト
+        const selectedCard = event.currentTarget.querySelector('.card');
+        selectedCard.classList.remove('border-opacity-25', 'border-2');
+        selectedCard.classList.add('border-3');
+        
+        selectedContractType = type;
+        
+        // 本社コード入力欄の表示/非表示
+        const headOfficeSection = document.getElementById('headOfficeCodeSection');
+        if (type === 'chain') {
+            headOfficeSection.style.display = 'block';
+            document.getElementById('headOfficeCode').required = true;
+        } else {
+            headOfficeSection.style.display = 'none';
+            document.getElementById('headOfficeCode').required = false;
+            document.getElementById('headOfficeCode').value = '';
+        }
+        
+        // フォームの有効性をチェック
+        checkFormValidity();
+    }
+    
+    function checkFormValidity() {
+        const companyName = document.getElementById('companyName').value.trim();
+        const locationName = document.getElementById('locationName').value.trim();
+        const headOfficeCode = document.getElementById('headOfficeCode').value.trim();
+        const submitBtn = document.getElementById('submitBtn');
+        
+        let isValid = selectedContractType && companyName && locationName;
+        
+        // チェーン店の場合は本社コードも必要
+        if (selectedContractType === 'chain') {
+            isValid = isValid && headOfficeCode;
+        }
+        
+        submitBtn.disabled = !isValid;
+    }
+    
+    // フォーム入力時のリアルタイムバリデーション
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = ['companyName', 'locationName', 'headOfficeCode'];
+        inputs.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', checkFormValidity);
+            }
+        });
+        
+        // 契約タイプカードにホバー効果
+        document.querySelectorAll('.contract-type-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.querySelector('.card').style.transform = 'scale(1.02)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.querySelector('.card').style.transform = 'scale(1)';
+            });
+        });
+    });
+</script>
+
+<style>
+    /* ステップ表示のスタイル */
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .step-item.active .step-circle {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .step-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    
+    .step-item.active .step-label {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+    
+    .step-line {
+        width: 80px;
+        height: 2px;
+        background-color: #e9ecef;
+        margin: 0 10px;
+        align-self: center;
+        margin-top: -25px;
+    }
+    
+    /* 契約タイプカードのスタイル */
+    .contract-type-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .contract-type-card .card {
+        transition: all 0.3s ease;
+        border: 2px solid;
+    }
+    
+    .contract-type-card:hover .card {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* フォームスタイルの改善 */
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        color: #0d6efd;
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+    }
+    
+    /* ボタンのホバー効果 */
+    .btn-lg {
+        padding: 12px 24px;
+        font-weight: 500;
+    }
+    
+    #submitBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* レスポンシブ対応 */
+    @@media (max-width: 768px) {
+        .step-line {
+            display: none;
+        }
+        
+        .step-item {
+            margin-bottom: 20px;
+        }
+        
+        .d-flex.align-items-center {
+            flex-direction: column;
+        }
+        
+        .contract-type-card .card-body {
+            padding: 2rem 1.5rem;
+        }
+    }
+    
+    /* 背景グラデーション */
+    body {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        min-height: 100vh;
+    }
+</style>

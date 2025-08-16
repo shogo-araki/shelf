@@ -8,6 +8,9 @@ namespace shelf_project.Models
         [Key]
         public int Id { get; set; }
 
+        /// <summary>
+        /// 拠点ID（1対1関係）
+        /// </summary>
         [Required]
         public int DistributorId { get; set; }
 
@@ -32,5 +35,7 @@ namespace shelf_project.Models
         public DateTime? DeactivatedAt { get; set; }
 
         public virtual ICollection<Sale>? Sales { get; set; }
+
+        public virtual ICollection<QRCodeProduct>? QRCodeProducts { get; set; }
     }
 }

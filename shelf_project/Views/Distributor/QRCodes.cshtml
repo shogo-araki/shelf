@@ -1,0 +1,313 @@
+@model IEnumerable<shelf_project.Models.QRCode>
+@{
+    ViewData["Title"] = "QRコード管理";
+    var selectedDistributor = ViewBag.SelectedDistributor as shelf_project.Models.Distributor;
+    var allDistributors = ViewBag.AllDistributors as List<shelf_project.Models.Distributor>;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>QRコード管理</h1>
+    </div>
+
+    <!-- Location Selector -->
+    @if (allDistributors != null && allDistributors.Count > 1)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-geo-alt"></i> 拠点選択</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var distributor in allDistributors)
+                    {
+                        <div class="col-md-3 mb-2">
+                            <a href="@Url.Action("QRCodes", new { locationId = distributor.Id })" 
+                               class="btn @(selectedDistributor?.Id == distributor.Id ? "btn-primary" : "btn-outline-primary") w-100">
+                                <i class="bi bi-building"></i> @distributor.CompanyName
+                                @if (distributor.LocationName != null)
+                                {
+                                    <br><small>@distributor.LocationName</small>
+                                }
+                            </a>
+                        </div>
+                    }
+                </div>
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>現在選択中の拠点:</strong> @selectedDistributor?.CompanyName
+                    @if (selectedDistributor?.LocationName != null)
+                    {
+                        <span>(@selectedDistributor.LocationName)</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Generate New QR Code -->
+    @{
+        var hasActiveQRCode = Model.Any(q => q.IsActive);
+        var hasAnyQRCode = Model.Any();
+        var inactiveCount = Model.Count(q => !q.IsActive);
+    }
+    
+    @if (!hasAnyQRCode)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-plus-circle"></i> 拠点のQRコードを生成</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>1拠点につき1つのQRコード</strong><br>
+                    この拠点専用のQRコードを生成します。お客様がこのQRコードを読み取ると、あなたの拠点専用のECサイトが表示されます。
+                </div>
+                <form asp-action="GenerateQRCode" method="post">
+                    <input type="hidden" name="distributorId" value="@ViewBag.DistributorId" />
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="location" class="form-label">設置場所 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="location" name="location" 
+                                       placeholder="例: レジ前、店舗入口、商品棚前など" required>
+                                <small class="form-text text-muted">QRコードを設置する具体的な場所を入力してください。</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-qr-code"></i> QRコード生成
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+    else if (hasActiveQRCode)
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i>
+            <strong>QRコード生成済み（有効）</strong><br>
+            この拠点には有効なQRコードが存在します。1拠点につき1つのQRコードのみ生成可能です。
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>QRコード生成不可</strong><br>
+            この拠点には@(inactiveCount)個の無効なQRコードが存在します。新しいQRコードを生成するには、既存のQRコードを<strong>完全に削除</strong>してください。
+        </div>
+    }
+
+    <!-- QR Codes List -->
+    <div class="card">
+        <div class="card-header">
+            <h5>発行済みQRコード一覧</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="row">
+                    @foreach (var qrCode in Model)
+                    {
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="card h-100 @(qrCode.IsActive ? "border-success" : "border-secondary")">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <strong>@qrCode.Location</strong>
+                                    <span class="badge @(qrCode.IsActive ? "bg-success" : "bg-secondary")">
+                                        @(qrCode.IsActive ? "有効" : "無効")
+                                    </span>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <!-- QR Code Display -->
+                                    <div class="text-center mb-3">
+                                        @if (!string.IsNullOrEmpty(qrCode.QRCodeImageUrl))
+                                        {
+                                            <div class="qr-code-container bg-light border rounded p-3" style="height: 150px;">
+                                                <img src="@qrCode.QRCodeImageUrl" alt="QRコード" class="img-fluid" style="max-height: 130px;" />
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="qr-code-placeholder bg-light border rounded p-3" style="height: 150px;">
+                                                <div class="d-flex flex-column justify-content-center h-100">
+                                                    <i class="bi bi-qr-code display-4 text-muted"></i>
+                                                    <small class="text-muted">QRコード画像</small>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- QR Code Info -->
+                                    <div class="mb-3">
+                                        <div class="row text-sm">
+                                            <div class="col-12 mb-2">
+                                                <strong>コード:</strong> 
+                                                <code class="bg-light px-2 py-1 rounded">@qrCode.Code</code>
+                                            </div>
+                                            <div class="col-12 mb-2">
+                                                <strong>URL:</strong><br>
+                                                <small class="text-muted font-monospace">
+                                                    @Context.Request.Scheme://@Context.Request.Host/shop/@qrCode.Code
+                                                </small>
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>作成日:</strong><br>
+                                                <small class="text-muted">@qrCode.CreatedAt.ToString("yyyy/MM/dd")</small>
+                                            </div>
+                                            @if (!qrCode.IsActive && qrCode.DeactivatedAt.HasValue)
+                                            {
+                                                <div class="col-6">
+                                                    <strong>無効化日:</strong><br>
+                                                    <small class="text-muted">@qrCode.DeactivatedAt.Value.ToString("yyyy/MM/dd")</small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="mt-auto">
+                                        <div class="btn-group w-100 mb-2" role="group">
+                                            <a href="/shop/@qrCode.Code" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye"></i> プレビュー
+                                            </a>
+                                            <a href="@Url.Action("QRCodeProducts", new { qrCodeId = qrCode.Id })" class="btn btn-outline-success btn-sm">
+                                                <i class="bi bi-box-seam"></i> 商品管理
+                                            </a>
+                                        </div>
+                                        
+                                            @if (qrCode.IsActive)
+                                            {
+                                                <form asp-action="DeactivateQRCode" method="post" style="display: inline;" 
+                                                      onsubmit="return confirm('このQRコードを無効化しますか？')">
+                                                    <input type="hidden" name="qrCodeId" value="@qrCode.Id" />
+                                                    <button type="submit" class="btn btn-outline-warning btn-sm">
+                                                        <i class="bi bi-pause"></i> 無効化
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                @if (!hasActiveQRCode)
+                                                {
+                                                    <form asp-action="ActivateQRCode" method="post" style="display: inline;">
+                                                        <input type="hidden" name="qrCodeId" value="@qrCode.Id" />
+                                                        <button type="submit" class="btn btn-outline-success btn-sm">
+                                                            <i class="bi bi-play"></i> 有効化
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-outline-secondary btn-sm" disabled title="他のQRコードが有効です">
+                                                        <i class="bi bi-play"></i> 有効化不可
+                                                    </button>
+                                                }
+                                            }
+
+                                        <!-- Copy URL Button -->
+                                        <button class="btn btn-outline-info btn-sm w-100 mt-2" 
+                                                onclick="copyToClipboard('@Context.Request.Scheme://@Context.Request.Host/shop/@qrCode.Code')">
+                                            <i class="bi bi-clipboard"></i> URLをコピー
+                                        </button>
+                                        
+                                        <!-- Download QR Code Button -->
+                                        <a href="@Url.Action("DownloadQRCode", new { qrCodeId = qrCode.Id })" 
+                                           class="btn btn-outline-secondary btn-sm w-100 mt-2">
+                                            <i class="bi bi-download"></i> QRコード画像をダウンロード
+                                        </a>
+                                        
+                                        <!-- Delete QR Code Button -->
+                                        <form asp-action="DeleteQRCode" method="post" class="mt-2" 
+                                              onsubmit="return confirm('このQRコードを完全に削除しますか？\n削除すると復元できません。')">
+                                            <input type="hidden" name="qrCodeId" value="@qrCode.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                                <i class="bi bi-trash"></i> 完全削除
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-qr-code display-1 text-muted"></i>
+                    <h4 class="mt-3 text-muted">QRコードがありません</h4>
+                    <p class="text-muted">上のフォームから新しいQRコードを生成してください。</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="alert alert-info mt-4">
+        <h6><i class="bi bi-info-circle"></i> QRコード管理について</h6>
+        <ul class="mb-0">
+            <li><strong>1拠点につき1つのQRコード</strong>の制限があります</li>
+            <li>生成されたQRコードを印刷して、指定した場所に設置してください</li>
+            <li>お客様がQRコードを読み取ると、あなたの拠点専用ECサイトが表示されます</li>
+            <li>QRコード経由での売上は自動的にあなたの実績として記録されます</li>
+            <li>無効化したQRコードを再度有効化する場合、他のQRコードが有効でないことが必要です</li>
+            <li>新しいQRコードを生成するには、既存のQRコードを<strong>完全に削除</strong>する必要があります</li>
+        </ul>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050;';
+        toast.innerHTML = 'URLをクリップボードにコピーしました <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.body.appendChild(toast);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    });
+}
+</script>
+
+<style>
+    .qr-code-placeholder:hover {
+        background-color: #f8f9fa !important;
+        transform: scale(1.02);
+        transition: all 0.2s ease;
+    }
+    
+    .font-monospace {
+        font-family: 'Courier New', monospace;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+</style>

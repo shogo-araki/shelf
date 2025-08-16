@@ -6,7 +6,52 @@
 }
 
 <div class="container-fluid">
-    <h1>商品管理</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>商品管理</h1>
+        <a asp-action="Manufacturers" class="btn btn-outline-primary">メーカー一覧から選ぶ</a>
+    </div>
+    
+    <!-- Search and Filter Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>商品検索・フィルタ</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" asp-action="Products">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="search" class="form-label">キーワード検索</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="@ViewBag.CurrentSearch" placeholder="商品名、説明、メーカー名で検索...">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="category" class="form-label">カテゴリ</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">すべてのカテゴリ</option>
+                            @foreach (var cat in ViewBag.Categories as List<string> ?? new List<string>())
+                            {
+                                <option value="@cat" selected="@(ViewBag.CurrentCategory == cat)">@cat</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="manufacturerId" class="form-label">メーカー</label>
+                        <select class="form-select" id="manufacturerId" name="manufacturerId">
+                            <option value="">すべてのメーカー</option>
+                            @foreach (var manufacturer in ViewBag.Manufacturers as List<shelf_project.Models.Manufacturer> ?? new List<shelf_project.Models.Manufacturer>())
+                            {
+                                <option value="@manufacturer.Id" selected="@(ViewBag.CurrentManufacturerId == manufacturer.Id)">@manufacturer.CompanyName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">検索</button>
+                        <a asp-action="Products" class="btn btn-outline-secondary">クリア</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <div class="row mb-4">
         <div class="col-md-12">
@@ -72,7 +117,10 @@
                                             <div class="card-body">
                                                 <h6 class="card-title">@product.Name</h6>
                                                 <p class="card-text">
-                                                    <small class="text-muted">@product.Manufacturer.CompanyName</small><br>
+                                                    <small class="text-muted">
+                                                        <a asp-action="ManufacturerProducts" asp-route-manufacturerId="@product.ManufacturerId" 
+                                                           class="text-decoration-none">@product.Manufacturer.CompanyName</a>
+                                                    </small><br>
                                                     @if (!string.IsNullOrEmpty(product.Description))
                                                     {
                                                         <span>@product.Description.Substring(0, Math.Min(100, product.Description.Length))@(product.Description.Length > 100 ? "..." : "")</span><br>
@@ -80,6 +128,10 @@
                                                     <strong>卸価格:</strong> ¥@product.WholesalePrice.ToString("N0")<br>
                                                     <strong>販売価格:</strong> ¥@product.RetailPrice.ToString("N0")<br>
                                                     <strong>利益率:</strong> @(((product.RetailPrice - product.WholesalePrice) / product.RetailPrice * 100).ToString("F1"))%<br>
+                                                    @if (!string.IsNullOrEmpty(product.Category))
+                                                    {
+                                                        <span class="badge bg-secondary me-1">@product.Category</span>
+                                                    }
                                                     @if (product.RequiresRefrigeration || product.RequiresFreezing)
                                                     {
                                                         <span class="badge bg-info">

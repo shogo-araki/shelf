@@ -1,0 +1,286 @@
+@model shelf_project.Models.Distributor
+@{
+    ViewData["Title"] = "設定";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-gear"></i> 設定</h1>
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> ダッシュボードに戻る
+        </a>
+    </div>
+
+    <!-- 基本情報 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-info-circle"></i> 基本情報</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">会社名</label>
+                        <input type="text" class="form-control" value="@Model.CompanyName" readonly>
+                    </div>
+                    @if (Model.Company != null && Model.Company.CompanyType == CompanyType.Chain && Model.DistributorType == DistributorType.Store)
+                    {
+                        <div class="form-group mb-3">
+                            <label class="form-label">本社会社名</label>
+                            <input type="text" class="form-control" value="@Model.Company.CompanyName" readonly>
+                            <small class="form-text text-muted">この店舗が属するチェーン本社</small>
+                        </div>
+                    }
+                    <div class="form-group mb-3">
+                        <label class="form-label">拠点名</label>
+                        <input type="text" class="form-control" value="@(Model.LocationName ?? "本店")" readonly>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">契約開始日</label>
+                        <input type="text" class="form-control" value="@Model.ContractStartDate.ToString("yyyy/MM/dd")" readonly>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">月額料金</label>
+                        <input type="text" class="form-control" value="¥@Model.MonthlyFee.ToString("N0")" readonly>
+                    </div>
+                    @if (Model.Company != null && Model.Company.CompanyType == CompanyType.Chain)
+                    {
+                        <div class="form-group mb-3">
+                            <label class="form-label">本社コード</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="@Model.Company.HeadOfficeCode" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('@Model.Company.HeadOfficeCode')">
+                                    <i class="bi bi-clipboard"></i> コピー
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">新しい店舗が参加する際に必要なコードです</small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- チェーン店設定 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-building"></i> チェーン店設定</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="current-status mb-4">
+                        <h6>現在の状態</h6>
+                        @if (Model.Company != null && Model.Company.CompanyType == CompanyType.Chain)
+                        {
+                            <div class="alert alert-success">
+                                <i class="bi bi-building-check"></i>
+                                <strong>チェーン店として登録済み</strong>
+                                <br>複数拠点の管理が可能です。
+                                @if (Model.DistributorType == DistributorType.HeadOffice)
+                                {
+                                    <br><span class="badge bg-primary mt-2">本社権限</span>
+                                }
+                                else
+                                {
+                                    <br><span class="badge bg-secondary mt-2">支店</span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <i class="bi bi-shop"></i>
+                                <strong>個人店として登録</strong>
+                                <br>単一拠点でのサービス利用です。
+                            </div>
+                        }
+                    </div>
+
+                    @if (Model.Company == null || Model.Company.CompanyType == CompanyType.Individual)
+                    {
+                        <!-- チェーン店へのアップグレード -->
+                        <div class="upgrade-section">
+                            <h6>チェーン店にアップグレード</h6>
+                            <p class="text-muted">
+                                チェーン店にアップグレードすると、複数拠点を一元管理できるようになります。
+                            </p>
+                            
+                            <div class="features-list mb-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li><i class="bi bi-check-circle text-success"></i> 複数拠点の一元管理</li>
+                                            <li><i class="bi bi-check-circle text-success"></i> チェーン全体の売上集計</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li><i class="bi bi-check-circle text-success"></i> 拠点別QRコード管理</li>
+                                            <li><i class="bi bi-check-circle text-success"></i> 統合レポート機能</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form asp-action="UpgradeToChain" method="post" onsubmit="return confirm('チェーン店にアップグレードしますか？')">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-arrow-up-circle"></i> チェーン店にアップグレード
+                                </button>
+                            </form>
+                        </div>
+                    }
+                    else if (Model.Company.CompanyType == CompanyType.Chain && Model.DistributorType == DistributorType.HeadOffice)
+                    {
+                        <!-- チェーン店の管理機能 -->
+                        <div class="chain-management">
+                            <h6>チェーン店管理機能</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <a href="@Url.Action("Locations", "Company")" class="btn btn-outline-primary w-100 mb-2">
+                                        <i class="bi bi-building"></i> チェーン店管理
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- 個人店へのダウングレード -->
+                            <div class="downgrade-section mt-4 pt-4 border-top">
+                                <h6 class="text-warning">個人店にダウングレード</h6>
+                                <p class="text-muted small">
+                                    個人店にダウングレードすると、チェーン店管理機能が利用できなくなります。
+                                    子拠点がある場合は、先に子拠点を削除する必要があります。
+                                </p>
+                                
+                                @{
+                                    var hasChildLocations = Model.Company.Distributors?.Any(d => d.DistributorType == DistributorType.Store) == true;
+                                }
+                                
+                                @if (hasChildLocations)
+                                {
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        子拠点が存在するため、ダウングレードできません。
+                                    </div>
+                                }
+                                else
+                                {
+                                    <form asp-action="DowngradeToIndividual" method="post" 
+                                          onsubmit="return confirm('個人店にダウングレードしますか？\nチェーン店管理機能が利用できなくなります。')">
+                                        <button type="submit" class="btn btn-outline-warning">
+                                            <i class="bi bi-arrow-down-circle"></i> 個人店にダウングレード
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <h6>注意事項</h6>
+                        <ul class="small text-muted">
+                            <li>アップグレード後も既存のサービスに影響はありません</li>
+                            <li>チェーン店機能は本社権限でのみ利用可能です</li>
+                            <li>子拠点がある場合、ダウングレードはできません</li>
+                            <li>設定変更は即座に反映されます</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- その他の設定 -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-sliders"></i> その他の設定</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">棚数</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" value="@Model.ShelfCount" readonly>
+                            <span class="input-group-text">台</span>
+                        </div>
+                        <small class="form-text text-muted">変更は管理者にお問い合わせください</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">商品選定数</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" value="@Model.ProductSelectionCount" readonly>
+                            <span class="input-group-text">商品</span>
+                        </div>
+                        <small class="form-text text-muted">変更は管理者にお問い合わせください</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-info alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Info"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<style>
+    .info-box {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1rem;
+    }
+    
+    .features-list .bi {
+        margin-right: 0.5rem;
+    }
+    
+    .current-status .alert {
+        margin-bottom: 0;
+    }
+</style>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050;';
+        toast.innerHTML = '本社コードをクリップボードにコピーしました <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.body.appendChild(toast);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    });
+}
+</script>

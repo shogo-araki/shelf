@@ -27,6 +27,17 @@ namespace shelf_project.Models
         [StringLength(100)]
         public string? ContactPerson { get; set; }
 
+        [StringLength(2000)]
+        public string? CompanyDescription { get; set; }
+
+        [StringLength(100)]
+        public string? Industry { get; set; }
+
+        [StringLength(500)]
+        public string? Website { get; set; }
+
+        public int EstablishedYear { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using shelf_project.Data;
 using shelf_project.Models;
+using shelf_project.Services;
 
 namespace shelf_project
 {
@@ -39,6 +40,7 @@ namespace shelf_project
             // Add services to the container
             builder.Services.AddControllersWithViews();
             builder.Services.AddAutoMapper(typeof(Program));
+            builder.Services.AddScoped<IQRCodeService, QRCodeService>();
 
             var app = builder.Build();
 

@@ -1,0 +1,187 @@
+@model shelf_project.Models.Distributor
+@{
+    ViewData["Title"] = "本社コード管理";
+    var company = ViewBag.Company as shelf_project.Models.Company;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-code-square"></i> 本社コード管理</h1>
+        <a href="@Url.Action("Locations")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 拠点管理に戻る
+        </a>
+    </div>
+
+    <!-- 現在の本社コード -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-key"></i> 現在の本社コード</h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <h2 class="mb-0 font-monospace text-primary">@company!.HeadOfficeCode</h2>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                onclick="copyToClipboard('@company.HeadOfficeCode')">
+                            <i class="bi bi-clipboard"></i> コピー
+                        </button>
+                    </div>
+                    <p class="text-muted mb-0">
+                        新しい拠点がチェーン店として参加する際に、このコードを入力してもらってください。
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <form asp-action="RegenerateHeadOfficeCode" method="post" 
+                          onsubmit="return confirm('本社コードを再生成しますか？\\n既存のコードは無効になります。')">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-arrow-clockwise"></i> コード再生成
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 参加済み拠点一覧 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-building"></i> 参加済み拠点一覧</h5>
+        </div>
+        <div class="card-body">
+            @if (company.Distributors?.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>拠点名</th>
+                                <th>タイプ</th>
+                                <th>住所</th>
+                                <th>参加日</th>
+                                <th>ステータス</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var location in company.Distributors.OrderBy(d => d.DistributorType).ThenBy(d => d.ContractStartDate))
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@location.LocationName</strong>
+                                        @if (location.DistributorType == DistributorType.HeadOffice)
+                                        {
+                                            <span class="badge bg-primary ms-2">本社</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @(location.DistributorType == DistributorType.HeadOffice ? "bg-primary" : "bg-secondary")">
+                                            @(location.DistributorType == DistributorType.HeadOffice ? "本社" : "支店")
+                                        </span>
+                                    </td>
+                                    <td>@(location.Address ?? "未設定")</td>
+                                    <td>@location.ContractStartDate.ToString("yyyy/MM/dd")</td>
+                                    <td>
+                                        <span class="badge @(location.IsActive ? "bg-success" : "bg-secondary")">
+                                            @(location.IsActive ? "稼働中" : "停止中")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <i class="bi bi-building display-4 text-muted"></i>
+                    <h5 class="mt-3 text-muted">参加拠点がありません</h5>
+                    <p class="text-muted">本社コードを他の拠点に共有して、チェーンへの参加を促してください。</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 使用方法 -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-question-circle"></i> 本社コードの使用方法</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>新規拠点の参加手順</h6>
+                    <ol class="ps-3">
+                        <li>新規拠点の担当者にアカウント作成をしてもらう</li>
+                        <li>代理店としてログイン後、新規契約画面が表示される</li>
+                        <li>本社コード欄に上記のコードを入力してもらう</li>
+                        <li>契約完了後、自動的にチェーンに参加</li>
+                    </ol>
+                </div>
+                <div class="col-md-6">
+                    <h6>重要な注意事項</h6>
+                    <ul class="ps-3">
+                        <li>本社コードは秘密情報として管理してください</li>
+                        <li>コードが漏洩した場合は即座に再生成してください</li>
+                        <li>参加した拠点は本社から管理できます</li>
+                        <li>コード再生成後は新しいコードのみ有効です</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            // 成功時の処理
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 1060; min-width: 250px;';
+            toast.innerHTML = `
+                <i class="bi bi-check-circle"></i> 本社コードをコピーしました
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            // 3秒後に自動削除
+            setTimeout(function() {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 3000);
+        }, function(err) {
+            console.error('コピーに失敗しました: ', err);
+        });
+    }
+</script>
+
+<style>
+    .font-monospace {
+        font-family: 'Courier New', monospace;
+        letter-spacing: 2px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+</style>

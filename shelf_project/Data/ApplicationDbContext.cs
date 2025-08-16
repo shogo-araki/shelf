@@ -11,6 +11,7 @@ namespace shelf_project.Data
         {
         }
 
+        public DbSet<Company> Companies { get; set; }
         public DbSet<Distributor> Distributors { get; set; }
         public DbSet<Manufacturer> Manufacturers { get; set; }
         public DbSet<Product> Products { get; set; }
@@ -23,17 +24,40 @@ namespace shelf_project.Data
         public DbSet<Settlement> Settlements { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<SampleOrder> SampleOrders { get; set; }
+        public DbSet<QRCodeProduct> QRCodeProducts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
             // Configure entity relationships and constraints
+            
+            // Company relationships
+            builder.Entity<Company>()
+                .HasOne(c => c.OwnerUser)
+                .WithMany()
+                .HasForeignKey(c => c.OwnerUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Distributor relationships
             builder.Entity<Distributor>()
                 .HasOne(d => d.User)
                 .WithMany(u => u.Distributors)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Distributor>()
+                .HasOne(d => d.Company)
+                .WithMany(c => c.Distributors)
+                .HasForeignKey(d => d.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure Distributor parent-child relationship
+            builder.Entity<Distributor>()
+                .HasOne(d => d.ParentDistributor)
+                .WithMany(d => d.ChildDistributors)
+                .HasForeignKey(d => d.ParentDistributorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Manufacturer>()
                 .HasOne(m => m.User)
@@ -89,6 +113,7 @@ namespace shelf_project.Data
                 .HasForeignKey(dp => dp.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // QRCode relationships (both old and new design)
             builder.Entity<QRCode>()
                 .HasOne(qr => qr.Distributor)
                 .WithMany(d => d.QRCodes)
@@ -149,6 +174,18 @@ namespace shelf_project.Data
                 .HasForeignKey(so => so.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<QRCodeProduct>()
+                .HasOne(qcp => qcp.QRCode)
+                .WithMany(qr => qr.QRCodeProducts)
+                .HasForeignKey(qcp => qcp.QRCodeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<QRCodeProduct>()
+                .HasOne(qcp => qcp.Product)
+                .WithMany(p => p.QRCodeProducts)
+                .HasForeignKey(qcp => qcp.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Configure decimal precision
             builder.Entity<Product>()
                 .Property(p => p.WholesalePrice)
@@ -166,6 +203,7 @@ namespace shelf_project.Data
             builder.Entity<QRCode>()
                 .HasIndex(qr => qr.Code)
                 .IsUnique();
+
 
             builder.Entity<Order>()
                 .HasIndex(o => o.OrderNumber)

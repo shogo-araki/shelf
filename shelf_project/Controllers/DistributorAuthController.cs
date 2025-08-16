@@ -17,8 +17,24 @@ namespace shelf_project.Controllers
         }
 
         [HttpGet]
-        public IActionResult Register()
+        public async Task<IActionResult> Register()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user?.Role == UserRole.Distributor)
+                {
+                    return RedirectToAction("Index", "Distributor");
+                }
+                else if (user?.Role == UserRole.Manufacturer)
+                {
+                    return RedirectToAction("Index", "Manufacturer");
+                }
+                else if (user?.Role == UserRole.Consumer)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+            }
             return View();
         }
 
@@ -32,8 +48,6 @@ namespace shelf_project.Controllers
                 {
                     UserName = model.Email,
                     Email = model.Email,
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
                     Role = UserRole.Distributor,
                     CompanyName = model.CompanyName
                 };
@@ -56,8 +70,24 @@ namespace shelf_project.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login(string? returnUrl = null)
+        public async Task<IActionResult> Login(string? returnUrl = null)
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user?.Role == UserRole.Distributor)
+                {
+                    return RedirectToAction("Index", "Distributor");
+                }
+                else if (user?.Role == UserRole.Manufacturer)
+                {
+                    return RedirectToAction("Index", "Manufacturer");
+                }
+                else if (user?.Role == UserRole.Consumer)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+            }
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }

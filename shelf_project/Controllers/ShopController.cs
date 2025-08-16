@@ -20,39 +20,81 @@ namespace shelf_project.Controllers
             _signInManager = signInManager;
         }
 
-        public async Task<IActionResult> Index(string? qr = null)
+        public IActionResult Index()
         {
-            var products = await _context.Products
-                .Include(p => p.Manufacturer)
+            // 直接アクセスは禁止し、QRコード経由のみアクセス可能
+            return NotFound("このページは代理店QRコード経由でのみアクセス可能です。");
+        }
+
+        [Route("shop/{qrCode}")]
+        public async Task<IActionResult> DistributorShop(string qrCode)
+        {
+            var qrCodeEntity = await _context.QRCodes
+                .Include(q => q.Distributor)
+                .FirstOrDefaultAsync(q => q.Code == qrCode && q.IsActive);
+
+            if (qrCodeEntity?.Distributor == null)
+            {
+                return NotFound("QRコードが見つからないか、無効です。");
+            }
+
+            // QRコードに登録されている商品のみを取得
+            var qrCodeProducts = await _context.QRCodeProducts
+                .Include(qcp => qcp.Product)
+                .ThenInclude(p => p.Manufacturer)
+                .Where(qcp => qcp.QRCodeId == qrCodeEntity.Id && qcp.IsActive)
+                .Select(qcp => qcp.Product)
                 .Where(p => p.IsActive && p.StockQuantity > 0)
                 .ToListAsync();
 
-            ViewBag.QRCode = qr;
-            
-            if (!string.IsNullOrEmpty(qr))
+            ViewBag.Distributor = qrCodeEntity.Distributor;
+            ViewBag.QRCode = qrCode;
+            ViewBag.IsDistributorSite = true;
+
+            return View("DistributorShop", qrCodeProducts);
+        }
+
+        [Route("shop/{qrCode}/product/{id}")]
+        public async Task<IActionResult> DistributorProduct(string qrCode, int id)
+        {
+            var qrCodeEntity = await _context.QRCodes
+                .Include(q => q.Distributor)
+                .FirstOrDefaultAsync(q => q.Code == qrCode && q.IsActive);
+
+            if (qrCodeEntity?.Distributor == null)
             {
-                var qrCode = await _context.QRCodes
-                    .Include(q => q.Distributor)
-                    .FirstOrDefaultAsync(q => q.Code == qr && q.IsActive);
-                
-                ViewBag.Distributor = qrCode?.Distributor;
-                
-                if (qrCode?.Distributor != null)
-                {
-                    // QRコード経由の場合、その代理店が取り扱っている商品のみ表示
-                    var distributorProducts = await _context.DistributorProducts
-                        .Include(dp => dp.Product)
-                        .ThenInclude(p => p.Manufacturer)
-                        .Where(dp => dp.DistributorId == qrCode.Distributor.Id && dp.IsActive)
-                        .Select(dp => dp.Product)
-                        .Where(p => p.IsActive && p.StockQuantity > 0)
-                        .ToListAsync();
-                    
-                    products = distributorProducts;
-                }
+                return NotFound("QRコードが見つからないか、無効です。");
             }
 
-            return View(products);
+            // 代理店が取り扱っている商品かチェック
+            var distributorProduct = await _context.DistributorProducts
+                .FirstOrDefaultAsync(dp => dp.DistributorId == qrCodeEntity.Distributor.Id && 
+                                         dp.ProductId == id && dp.IsActive);
+
+            if (distributorProduct == null)
+            {
+                return NotFound("この商品は取り扱っていません。");
+            }
+
+            var product = await _context.Products
+                .Include(p => p.Manufacturer)
+                .Include(p => p.Reviews)
+                .ThenInclude(r => r.User)
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.QRCode = qrCode;
+            ViewBag.Distributor = qrCodeEntity.Distributor;
+            ViewBag.IsDistributorSite = true;
+            ViewBag.AverageRating = product.Reviews?.Any() == true 
+                ? product.Reviews.Where(r => r.IsApproved).Average(r => r.Rating) 
+                : 0;
+
+            return View("DistributorProduct", product);
         }
 
         [HttpGet]
@@ -133,35 +175,16 @@ namespace shelf_project.Controllers
             return View(model);
         }
 
-        public async Task<IActionResult> Product(int id, string? qr = null)
+        public IActionResult Product(int id, string? qr = null)
         {
-            var product = await _context.Products
-                .Include(p => p.Manufacturer)
-                .Include(p => p.Reviews)
-                .ThenInclude(r => r.User)
-                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
-
-            if (product == null)
+            // QRコードパラメータがない場合は直接アクセスを禁止
+            if (string.IsNullOrEmpty(qr))
             {
-                return NotFound();
+                return NotFound("このページは代理店QRコード経由でのみアクセス可能です。");
             }
-
-            ViewBag.QRCode = qr;
             
-            if (!string.IsNullOrEmpty(qr))
-            {
-                var qrCode = await _context.QRCodes
-                    .Include(q => q.Distributor)
-                    .FirstOrDefaultAsync(q => q.Code == qr && q.IsActive);
-                
-                ViewBag.Distributor = qrCode?.Distributor;
-            }
-
-            ViewBag.AverageRating = product.Reviews?.Any() == true 
-                ? product.Reviews.Where(r => r.IsApproved).Average(r => r.Rating) 
-                : 0;
-
-            return View(product);
+            // QRコード経由の場合は、DistributorProductアクションにリダイレクト
+            return RedirectToAction("DistributorProduct", new { qrCode = qr, id = id });
         }
     }
 }

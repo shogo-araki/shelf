@@ -1,0 +1,226 @@
+@model IEnumerable<shelf_project.Models.Product>
+@{
+    ViewData["Title"] = "メーカー別商品一覧";
+    var manufacturer = ViewBag.Manufacturer as shelf_project.Models.Manufacturer ?? new shelf_project.Models.Manufacturer();
+    var assignedProducts = ViewBag.AssignedProducts as List<shelf_project.Models.DistributorProduct> ?? new List<shelf_project.Models.DistributorProduct>();
+    var maxProducts = (int)ViewBag.MaxProducts;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>@manufacturer.CompanyName の商品</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Manufacturers">メーカー一覧</a></li>
+                    <li class="breadcrumb-item active">@manufacturer.CompanyName</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a asp-action="Manufacturers" class="btn btn-outline-secondary me-2">メーカー一覧</a>
+            <a asp-action="Products" class="btn btn-secondary">商品一覧</a>
+        </div>
+    </div>
+
+    <!-- Manufacturer Info -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4>@manufacturer.CompanyName</h4>
+                    @if (!string.IsNullOrEmpty(manufacturer.Industry))
+                    {
+                        <span class="badge bg-primary mb-2">@manufacturer.Industry</span>
+                    }
+                    @if (!string.IsNullOrEmpty(manufacturer.CompanyDescription))
+                    {
+                        <p class="text-muted">@manufacturer.CompanyDescription</p>
+                    }
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">
+                        @if (manufacturer.EstablishedYear > 0)
+                        {
+                            <div class="mb-1">
+                                <i class="bi bi-calendar"></i> 設立: @(manufacturer.EstablishedYear)年
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(manufacturer.Address))
+                        {
+                            <div class="mb-1">
+                                <i class="bi bi-geo-alt"></i> @manufacturer.Address
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(manufacturer.Website))
+                        {
+                            <div class="mb-1">
+                                <a href="@manufacturer.Website" target="_blank" class="text-decoration-none">
+                                    <i class="bi bi-globe"></i> ウェブサイト
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Selection Status -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>現在の選定状況 (@assignedProducts.Count / @maxProducts)</h5>
+                </div>
+                <div class="card-body">
+                    @if (assignedProducts.Any())
+                    {
+                        <div class="row">
+                            @foreach (var dp in assignedProducts.Take(3))
+                            {
+                                <div class="col-md-4 mb-2">
+                                    <div class="card border-success">
+                                        <div class="card-body py-2">
+                                            <small class="card-title">@dp.Product.Name</small>
+                                            <br><small class="text-muted">@dp.Product.Manufacturer.CompanyName</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            @if (assignedProducts.Count > 3)
+                            {
+                                <div class="col-md-12">
+                                    <small class="text-muted">他 @(assignedProducts.Count - 3) 商品が選定済み</small>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">まだ商品が選定されていません。</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Available Products -->
+    @if (assignedProducts.Count < maxProducts)
+    {
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>@manufacturer.CompanyName の商品 (あと@(maxProducts - assignedProducts.Count)商品選定できます)</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Any())
+                        {
+                            <div class="row">
+                                @foreach (var product in Model)
+                                {
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="card h-100">
+                                            @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                            {
+                                                <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover;">
+                                            }
+                                            <div class="card-body d-flex flex-column">
+                                                <h6 class="card-title">@product.Name</h6>
+                                                <p class="card-text flex-grow-1">
+                                                    @if (!string.IsNullOrEmpty(product.Description))
+                                                    {
+                                                        <span class="text-muted">@product.Description.Substring(0, Math.Min(100, product.Description.Length))@(product.Description.Length > 100 ? "..." : "")</span><br>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(product.Category))
+                                                    {
+                                                        <span class="badge bg-secondary me-1">@product.Category</span>
+                                                    }
+                                                    @if (product.RequiresRefrigeration || product.RequiresFreezing)
+                                                    {
+                                                        <span class="badge bg-info">
+                                                            @(product.RequiresFreezing ? "冷凍" : "冷蔵")
+                                                        </span>
+                                                    }
+                                                </p>
+                                                <div class="pricing-info mb-3">
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <small class="text-muted">卸価格</small><br>
+                                                            <strong>¥@product.WholesalePrice.ToString("N0")</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted">販売価格</small><br>
+                                                            <strong>¥@product.RetailPrice.ToString("N0")</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">利益率: </small>
+                                                        <strong class="text-success">@(((product.RetailPrice - product.WholesalePrice) / product.RetailPrice * 100).ToString("F1"))%</strong>
+                                                    </div>
+                                                </div>
+                                                <form asp-action="AddProduct" method="post" class="mt-auto">
+                                                    <input type="hidden" name="productId" value="@product.Id" />
+                                                    <button type="submit" class="btn btn-primary btn-sm w-100">この商品を選定</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <h5 class="text-muted">選定可能な商品がありません</h5>
+                                <p class="text-muted">このメーカーの商品は既にすべて選定済みか、現在利用できない状態です。</p>
+                                <a asp-action="Manufacturers" class="btn btn-outline-primary">他のメーカーを見る</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 
+            選択可能な商品数の上限に達しています。新しい商品を選定するには、既存の商品を削除してください。
+            <a asp-action="Products" class="btn btn-sm btn-outline-primary ms-3">商品管理画面へ</a>
+        </div>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<style>
+    .card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .bi {
+        margin-right: 4px;
+    }
+    
+    .pricing-info {
+        border-top: 1px solid #e9ecef;
+        padding-top: 0.75rem;
+    }
+</style>

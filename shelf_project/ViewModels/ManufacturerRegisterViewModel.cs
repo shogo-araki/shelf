@@ -20,13 +20,6 @@ namespace shelf_project.ViewModels
         [Compare("Password", ErrorMessage = "パスワードと確認用パスワードが一致しません。")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
-        [Required]
-        [Display(Name = "名")]
-        public string FirstName { get; set; } = string.Empty;
-
-        [Required]
-        [Display(Name = "姓")]
-        public string LastName { get; set; } = string.Empty;
 
         [Required]
         [Display(Name = "会社名")]

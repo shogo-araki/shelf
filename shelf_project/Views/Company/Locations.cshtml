@@ -1,0 +1,260 @@
+@model IEnumerable<shelf_project.Models.Distributor>
+@{
+    ViewData["Title"] = "拠点管理";
+    var company = ViewBag.Company as shelf_project.Models.Company;
+}
+
+<div class="container-fluid">
+    <!-- ヘッダー部分 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white rounded-3 shadow-sm p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="h3 mb-2 text-primary">
+                            <i class="bi bi-building-gear"></i> @company!.CompanyName
+                        </h1>
+                        <p class="text-muted mb-0">チェーン店拠点管理・運営統制システム</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group">
+                            <a href="@Url.Action("HeadOfficeCode")" class="btn btn-outline-info">
+                                <i class="bi bi-key"></i> 本社コード
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 拠点参加案内 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    <h6 class="mb-0 text-white">
+                        <i class="bi bi-plus-circle"></i> 新拠点をチェーンに参加させる方法
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <div class="step-guide">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="step-number bg-primary text-white rounded-circle me-3">1</div>
+                                    <div>
+                                        <strong>新拠点担当者がアカウント作成</strong>
+                                        <div class="text-muted small">ShelfUpに新規ユーザー登録をしてもらいます</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="step-number bg-success text-white rounded-circle me-3">2</div>
+                                    <div>
+                                        <strong>本社コードを入力して契約</strong>
+                                        <div class="text-muted small">代理店契約時に本社コードを入力してもらいます</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="step-number bg-info text-white rounded-circle me-3">3</div>
+                                    <div>
+                                        <strong>自動的にチェーンに参加完了</strong>
+                                        <div class="text-muted small">この管理画面で確認・管理できるようになります</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 text-center">
+                            <div class="bg-light rounded-3 p-4 mb-3">
+                                <i class="bi bi-key fs-1 text-primary mb-2"></i>
+                                <h6 class="text-primary mb-2">本社コード</h6>
+                                <code class="bg-white p-2 rounded">@company.HeadOfficeCode</code>
+                            </div>
+                            <a href="@Url.Action("HeadOfficeCode")" class="btn btn-primary btn-sm">
+                                <i class="bi bi-gear"></i> 本社コード管理
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 拠点一覧 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h6 class="mb-0">
+                                <i class="bi bi-buildings"></i> 登録済み拠点一覧
+                                <span class="badge bg-primary rounded-pill ms-2">@Model.Count() 拠点</span>
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <!-- カード表示 -->
+                        <div id="cardView" class="row g-4">
+                            @foreach (var location in Model)
+                            {
+                                <div class="col-lg-6 col-xl-4">
+                                    <div class="location-card card h-100 border-0 shadow-sm @(location.DistributorType == DistributorType.HeadOffice ? "border-start border-primary border-4" : "border-start border-info border-4")">
+                                        <div class="card-header bg-white border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0 text-primary">@location.LocationName</h6>
+                                                <div class="d-flex gap-1">
+                                                    <span class="badge @(location.DistributorType == DistributorType.HeadOffice ? "bg-primary" : "bg-info") rounded-pill">
+                                                        @(location.DistributorType == DistributorType.HeadOffice ? "本社" : "店舗")
+                                                    </span>
+                                                    <span class="badge @(location.IsActive ? "bg-success" : "bg-secondary") rounded-pill">
+                                                        @(location.IsActive ? "稼働中" : "停止中")
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                <div class="card-body">
+                                    <!-- 拠点情報 -->
+                                    <div class="mb-3">
+                                        @if (!string.IsNullOrEmpty(location.Address))
+                                        {
+                                            <div class="mb-2">
+                                                <i class="bi bi-geo-alt text-muted"></i>
+                                                <span>@location.Address</span>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(location.PhoneNumber))
+                                        {
+                                            <div class="mb-2">
+                                                <i class="bi bi-telephone text-muted"></i>
+                                                <span>@location.PhoneNumber</span>
+                                            </div>
+                                        }
+                                        <div class="mb-2">
+                                            <i class="bi bi-calendar text-muted"></i>
+                                            <span>開設日: @location.ContractStartDate.ToString("yyyy/MM/dd")</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- QRコード情報 -->
+                                    <div class="mb-3">
+                                        <h6>QRコード</h6>
+                                        @if (location.QRCodes?.Any(q => q.IsActive) == true)
+                                        {
+                                            var qrCode = location.QRCodes.First(q => q.IsActive);
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-success me-2">生成済み</span>
+                                                <code class="bg-light px-2 py-1 rounded">@qrCode.Code</code>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">設置場所: @qrCode.Location</small>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">未生成</span>
+                                            <div class="mt-2">
+                                                <small class="text-muted">QRコードが生成されていません</small>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- 売上情報 -->
+                                    <div class="mb-3">
+                                        <h6>売上実績</h6>
+                                        <div class="row text-center">
+                                            <div class="col-6">
+                                                <div class="border rounded p-2">
+                                                    <small class="text-muted">今月売上</small>
+                                                    <div class="h6 mb-0">¥@((location.Sales?.Where(s => s.SaleDate >= DateTime.Now.Date.AddDays(-30)).Sum(s => s.TotalAmount) ?? 0).ToString("N0"))</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="border rounded p-2">
+                                                    <small class="text-muted">今月注文数</small>
+                                                    <div class="h6 mb-0">@(location.Sales?.Where(s => s.SaleDate >= DateTime.Now.Date.AddDays(-30)).Count() ?? 0)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- アクション -->
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="d-flex gap-2">
+                                            @if (location.QRCodes?.Any(q => q.IsActive) == true)
+                                            {
+                                                <a href="/shop/@location.QRCodes.First(q => q.IsActive).Code" 
+                                                   class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-eye"></i> ECサイト確認
+                                                </a>
+                                            }
+                                        </div>
+                                        
+                                        @if (location.DistributorType == DistributorType.Store)
+                                        {
+                                            var hasSales = location.Sales?.Any() == true;
+                                            @if (hasSales)
+                                            {
+                                                <small class="text-muted">
+                                                    <i class="bi bi-info-circle"></i> 売上履歴があるため削除できません
+                                                </small>
+                                            }
+                                            else
+                                            {
+                                                <form asp-action="DeleteLocation" method="post" 
+                                                      onsubmit="return confirm('拠点「@location.LocationName」を削除しますか？\n関連するQRコードと商品登録も全て削除されます。\nこの操作は取り消せません。')">
+                                                    <input type="hidden" name="locationId" value="@location.Id" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                                        <i class="bi bi-trash"></i> 拠点削除
+                                                    </button>
+                                                </form>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-building display-1 text-muted"></i>
+                    <h4 class="mt-3 text-muted">拠点がありません</h4>
+                    <p class="text-muted">上のフォームから新しい拠点を追加してください。</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 注意事項 -->
+    <div class="alert alert-info mt-4">
+        <h6><i class="bi bi-info-circle"></i> 拠点管理について</h6>
+        <ul class="mb-0">
+            <li>各拠点には1つのQRコードが生成されます</li>
+            <li>新しく追加した拠点には、QRコードを個別に生成する必要があります</li>
+            <li>各拠点の売上は個別に管理・集計されます</li>
+            <li>本社アカウントから全拠点の管理が可能です</li>
+        </ul>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
