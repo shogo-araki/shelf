@@ -49,8 +49,8 @@ namespace shelf_project.Controllers
                 var targetDistributor = await _context.Distributors
                     .Include(d => d.Company)
                     .Include(d => d.Subscriptions)
-                    .Include(d => d.DistributorProducts)
-                    .ThenInclude(dp => dp.Product)
+                    .Include(d => d.QRCodes)
+                    .ThenInclude(q => q.QRCodeProducts)
                     .FirstOrDefaultAsync(d => d.Id == locationId.Value && 
                                            d.CompanyId == headOfficeDistributor.CompanyId && 
                                            d.IsActive);
@@ -65,8 +65,8 @@ namespace shelf_project.Controllers
             distributors = await _context.Distributors
                 .Include(d => d.Company)
                 .Include(d => d.Subscriptions)
-                .Include(d => d.DistributorProducts)
-                .ThenInclude(dp => dp.Product)
+                .Include(d => d.QRCodes)
+                .ThenInclude(q => q.QRCodeProducts)
                 .Where(d => d.UserId == user.Id && d.IsActive)
                 .ToListAsync();
 
@@ -269,9 +269,10 @@ namespace shelf_project.Controllers
                 .Where(dp => dp.DistributorId == distributor.Id && dp.IsActive)
                 .ToListAsync();
 
+            // 全ての有効な商品を表示（既に選定済み商品も含む）
             var availableProductsQuery = _context.Products
                 .Include(p => p.Manufacturer)
-                .Where(p => p.IsActive && !assignedProducts.Select(ap => ap.ProductId).Contains(p.Id));
+                .Where(p => p.IsActive);
 
             // Apply search filters
             if (!string.IsNullOrEmpty(search))
@@ -360,19 +361,15 @@ namespace shelf_project.Controllers
                 return NotFound();
             }
 
-            var assignedProductIds = await _context.DistributorProducts
-                .Where(dp => dp.DistributorId == distributor.Id && dp.IsActive)
-                .Select(dp => dp.ProductId)
-                .ToListAsync();
-
             var assignedProducts = await _context.DistributorProducts
                 .Include(dp => dp.Product)
                 .ThenInclude(p => p.Manufacturer)
                 .Where(dp => dp.DistributorId == distributor.Id && dp.IsActive)
                 .ToListAsync();
 
+            // 全ての有効な商品を表示（既に選定済み商品も含む）
             var availableProducts = manufacturer.Products?
-                .Where(p => p.IsActive && !assignedProductIds.Contains(p.Id))
+                .Where(p => p.IsActive)
                 .ToList() ?? new List<Product>();
 
             ViewBag.Manufacturer = manufacturer;
@@ -400,12 +397,13 @@ namespace shelf_project.Controllers
                 return NotFound();
             }
 
-            var activeProductsCount = distributor.DistributorProducts?.Count(dp => dp.IsActive) ?? 0;
-            if (activeProductsCount >= distributor.ProductSelectionCount)
-            {
-                TempData["Error"] = "選択可能な商品数の上限に達しています。";
-                return RedirectToAction("Products");
-            }
+            // 商品選択数の制限を無効化（自由に選択可能）
+            // var activeProductsCount = distributor.DistributorProducts?.Count(dp => dp.IsActive) ?? 0;
+            // if (activeProductsCount >= distributor.ProductSelectionCount)
+            // {
+            //     TempData["Error"] = "選択可能な商品数の上限に達しています。";
+            //     return RedirectToAction("Products");
+            // }
 
             var distributorProduct = new DistributorProduct
             {
@@ -1020,15 +1018,11 @@ namespace shelf_project.Controllers
             // Get the distributor that owns this QR code
             var distributor = qrCode.Distributor;
 
-            // 代理店が選定した商品のみを取得
-            var distributorProductIds = await _context.DistributorProducts
-                .Where(dp => dp.DistributorId == distributor.Id && dp.IsActive)
-                .Select(dp => dp.ProductId)
-                .ToListAsync();
-
+            // 全ての有効な商品を取得（商品選定制限を削除）
             var availableProducts = await _context.Products
                 .Include(p => p.Manufacturer)
-                .Where(p => p.IsActive && distributorProductIds.Contains(p.Id))
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.Name)
                 .ToListAsync();
 
             ViewBag.AvailableProducts = availableProducts;
@@ -1077,6 +1071,16 @@ namespace shelf_project.Controllers
             if (!hasAccess)
             {
                 return Forbid();
+            }
+
+            // 商品選定数制限をチェック
+            var currentProductCount = await _context.QRCodeProducts
+                .CountAsync(qcp => qcp.QRCodeId == qrCodeId && qcp.IsActive);
+            
+            if (currentProductCount >= qrCode.Distributor.ProductSelectionCount)
+            {
+                TempData["Error"] = $"商品選定数の上限（{qrCode.Distributor.ProductSelectionCount}商品）に達しています。";
+                return RedirectToAction("QRCodeProducts", new { qrCodeId });
             }
 
             // 既に同じ商品が登録されていないかチェック

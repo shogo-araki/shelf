@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using shelf_project.Data;
 
@@ -10,9 +11,11 @@ using shelf_project.Data;
 namespace shelf_project.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250816200856_AddContractManagement")]
+    partial class AddContractManagement
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -461,6 +464,10 @@ namespace shelf_project.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ContactPerson")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -806,7 +813,7 @@ namespace shelf_project.Migrations
                     b.Property<decimal>("DistributorCommission")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("DistributorId")
+                    b.Property<int>("DistributorId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsSettled")
@@ -1180,7 +1187,8 @@ namespace shelf_project.Migrations
                     b.HasOne("shelf_project.Models.Distributor", "Distributor")
                         .WithMany("Sales")
                         .HasForeignKey("DistributorId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("shelf_project.Models.Order", "Order")
                         .WithMany()

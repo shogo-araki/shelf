@@ -14,11 +14,13 @@ namespace shelf_project.Models
         [ForeignKey("OrderId")]
         public virtual Order Order { get; set; } = null!;
 
-        [Required]
-        public int DistributorId { get; set; }
+        /// <summary>
+        /// 代理店ID（解約時にnullになる場合があるため nullable）
+        /// </summary>
+        public int? DistributorId { get; set; }
 
         [ForeignKey("DistributorId")]
-        public virtual Distributor Distributor { get; set; } = null!;
+        public virtual Distributor? Distributor { get; set; }
 
         public int? QRCodeId { get; set; }
 

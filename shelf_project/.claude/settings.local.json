@@ -6,7 +6,9 @@
       "Bash(dotnet ef database:*)",
       "Bash(rm:*)",
       "Bash(dotnet build:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(dotnet run:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

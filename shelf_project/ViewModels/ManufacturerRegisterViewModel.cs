@@ -31,7 +31,5 @@ namespace shelf_project.ViewModels
         [Display(Name = "電話番号")]
         public string? PhoneNumber { get; set; }
 
-        [Display(Name = "担当者名")]
-        public string? ContactPerson { get; set; }
     }
 }

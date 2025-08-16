@@ -24,8 +24,6 @@ namespace shelf_project.Models
         [StringLength(20)]
         public string? PhoneNumber { get; set; }
 
-        [StringLength(100)]
-        public string? ContactPerson { get; set; }
 
         [StringLength(2000)]
         public string? CompanyDescription { get; set; }

@@ -1,0 +1,285 @@
+@model Distributor
+@{
+    ViewData["Title"] = "契約情報";
+    var allDistributors = ViewBag.AllDistributors as List<Distributor>;
+    var currentDistributorId = ViewBag.CurrentDistributorId as int?;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-file-earmark-text"></i> 契約情報</h1>
+        <a href="@Url.Action("Index", "Distributor")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> ダッシュボードに戻る
+        </a>
+    </div>
+
+    <!-- 拠点選択（複数拠点がある場合） -->
+    @if (allDistributors != null && allDistributors.Count > 1)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-building"></i> 拠点選択</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var distributor in allDistributors)
+                            {
+                                <div class="col-md-3 mb-2">
+                                    @if (distributor.Id == currentDistributorId)
+                                    {
+                                        <span class="badge bg-primary p-2 w-100">
+                                            <i class="bi bi-check-circle"></i> @(distributor.LocationName ?? distributor.CompanyName)
+                                            @if (distributor.DistributorType == DistributorType.HeadOffice)
+                                            {
+                                                <small>(本社)</small>
+                                            }
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <a href="@Url.Action("Index", new { locationId = distributor.Id })" class="btn btn-outline-secondary w-100">
+                                            @(distributor.LocationName ?? distributor.CompanyName)
+                                            @if (distributor.DistributorType == DistributorType.HeadOffice)
+                                            {
+                                                <small>(本社)</small>
+                                            }
+                                        </a>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- 契約基本情報 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 契約詳細</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>契約者名:</strong><br>@Model.CompanyName</p>
+                            <p><strong>契約開始日:</strong><br>@Model.ContractStartDate.ToString("yyyy年MM月dd日")</p>
+                            <p><strong>月額利用料:</strong><br>¥@Model.MonthlyFee.ToString("N0")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>契約満了日:</strong><br>@Model.ContractMaturityDate.ToString("yyyy年MM月dd日")</p>
+                            <p><strong>棚数:</strong><br>@Model.ShelfCount 台</p>
+                            <p><strong>商品選定可能数:</strong><br>@Model.ProductSelectionCount 商品</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-diagram-3"></i> 契約ステータス</h5>
+                </div>
+                <div class="card-body text-center">
+                    @switch (Model.ContractStatus)
+                    {
+                        case ContractStatus.Active:
+                            <span class="badge bg-success fs-6 p-3">
+                                <i class="bi bi-check-circle"></i> 契約中
+                            </span>
+                            break;
+                        case ContractStatus.CancellationRequested:
+                            <span class="badge bg-warning fs-6 p-3">
+                                <i class="bi bi-exclamation-triangle"></i> 解約申請中
+                            </span>
+                            break;
+                        case ContractStatus.PendingShelfReturn:
+                            <span class="badge bg-info fs-6 p-3">
+                                <i class="bi bi-clock"></i> 棚返却確認中
+                            </span>
+                            break;
+                        case ContractStatus.Cancelled:
+                            <span class="badge bg-secondary fs-6 p-3">
+                                <i class="bi bi-x-circle"></i> 解約済み
+                            </span>
+                            break;
+                        case ContractStatus.Suspended:
+                            <span class="badge bg-danger fs-6 p-3">
+                                <i class="bi bi-pause-circle"></i> 一時停止
+                            </span>
+                            break;
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 解約・棚返却情報 -->
+    @if (Model.ContractStatus != ContractStatus.Active)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-box-arrow-right"></i> 解約・棚返却情報</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @if (Model.CancellationRequestDate.HasValue)
+                            {
+                                <div class="col-md-3">
+                                    <p><strong>解約申請日:</strong><br>@Model.CancellationRequestDate.Value.ToString("yyyy年MM月dd日")</p>
+                                </div>
+                            }
+                            @if (Model.ShelfReturnDueDate.HasValue)
+                            {
+                                <div class="col-md-3">
+                                    <p><strong>棚返却予定日:</strong><br>@Model.ShelfReturnDueDate.Value.ToString("yyyy年MM月dd日")</p>
+                                </div>
+                            }
+                            @if (Model.ShelfReturnedDate.HasValue)
+                            {
+                                <div class="col-md-3">
+                                    <p><strong>棚返却完了日:</strong><br>@Model.ShelfReturnedDate.Value.ToString("yyyy年MM月dd日")</p>
+                                </div>
+                            }
+                            <div class="col-md-3">
+                                <p><strong>棚返却状況:</strong><br>
+                                    @switch (Model.ShelfReturnStatus)
+                                    {
+                                        case ShelfReturnStatus.NotRequired:
+                                            <span class="badge bg-secondary">返却不要</span>
+                                            break;
+                                        case ShelfReturnStatus.Scheduled:
+                                            <span class="badge bg-primary">返却予定</span>
+                                            break;
+                                        case ShelfReturnStatus.Overdue:
+                                            <span class="badge bg-danger">期限超過</span>
+                                            break;
+                                        case ShelfReturnStatus.Completed:
+                                            <span class="badge bg-success">返却完了</span>
+                                            break;
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        @if (Model.ShelfReturnStatus == ShelfReturnStatus.Overdue)
+                        {
+                            <div class="alert alert-danger mt-3">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>棚返却期限が過ぎています。</strong> 速やかに棚の返却をお願いいたします。
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- 操作ボタン -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> 契約管理</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.ContractStatus == ContractStatus.Active)
+                    {
+                        @if (Model.CanCancelContract)
+                        {
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                契約開始から1年が経過したため、解約申請が可能です。
+                                解約申請後、30日以内に棚の返却が必要となります。
+                            </div>
+                            
+                            <form asp-action="RequestCancellation" method="post" class="d-inline">
+                                <input type="hidden" name="distributorId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-warning me-2" 
+                                        onclick="return confirm('解約申請を行いますか？\n申請後30日以内に棚の返却が必要になります。')">
+                                    <i class="bi bi-box-arrow-right"></i> 解約申請
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <i class="bi bi-clock"></i>
+                                契約開始から1年後（@Model.ContractMaturityDate.ToString("yyyy年MM月dd日")）以降に解約申請が可能になります。
+                            </div>
+                        }
+                    }
+                    else if (Model.ContractStatus == ContractStatus.CancellationRequested)
+                    {
+                        @if (Model.ShelfReturnStatus != ShelfReturnStatus.Completed)
+                        {
+                            <form asp-action="ConfirmShelfReturn" method="post" class="d-inline">
+                                <input type="hidden" name="distributorId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-success me-2"
+                                        onclick="return confirm('棚の返却が完了しましたか？')">
+                                    <i class="bi bi-check-circle"></i> 棚返却完了報告
+                                </button>
+                            </form>
+
+                            <form asp-action="ExtendContract" method="post" class="d-inline">
+                                <input type="hidden" name="distributorId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('解約申請をキャンセルして契約を継続しますか？')">
+                                    <i class="bi bi-arrow-clockwise"></i> 契約継続（解約申請キャンセル）
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i>
+                                棚返却の報告を受け付けました。管理者による確認後、契約解約処理が完了します。
+                            </div>
+                        }
+                    }
+                    else if (Model.ContractStatus == ContractStatus.PendingShelfReturn)
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-clock"></i>
+                            棚返却の確認中です。管理者による確認が完了次第、契約解約処理が完了します。
+                        </div>
+                    }
+                    else if (Model.ContractStatus == ContractStatus.Cancelled)
+                    {
+                        <div class="alert alert-secondary">
+                            <i class="bi bi-check-circle"></i>
+                            契約は正常に解約されました。ご利用いただき、ありがとうございました。
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重要事項説明 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 重要事項</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-dot"></i> 契約期間は最低1年間です。契約開始から1年後以降に解約申請が可能になります。</li>
+                        <li class="mb-2"><i class="bi bi-dot"></i> 1年経過後は1ヶ月単位での随時契約となります。</li>
+                        <li class="mb-2"><i class="bi bi-dot"></i> 解約申請後、30日以内に棚の返却が必要です。</li>
+                        <li class="mb-2"><i class="bi bi-dot"></i> 棚返却期限を過ぎた場合、追加料金が発生する場合があります。</li>
+                        <li class="mb-2"><i class="bi bi-dot"></i> 契約に関する詳細は、契約書面をご確認ください。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

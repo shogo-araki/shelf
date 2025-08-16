@@ -67,6 +67,31 @@ namespace shelf_project.Models
 
         public DateTime? ContractEndDate { get; set; }
 
+        /// <summary>
+        /// 解約申請日（解約手続き開始日）
+        /// </summary>
+        public DateTime? CancellationRequestDate { get; set; }
+
+        /// <summary>
+        /// 棚返却予定日
+        /// </summary>
+        public DateTime? ShelfReturnDueDate { get; set; }
+
+        /// <summary>
+        /// 棚返却完了日
+        /// </summary>
+        public DateTime? ShelfReturnedDate { get; set; }
+
+        /// <summary>
+        /// 棚返却状況
+        /// </summary>
+        public ShelfReturnStatus ShelfReturnStatus { get; set; } = ShelfReturnStatus.NotRequired;
+
+        /// <summary>
+        /// 契約ステータス
+        /// </summary>
+        public ContractStatus ContractStatus { get; set; } = ContractStatus.Active;
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -115,6 +140,32 @@ namespace shelf_project.Models
                 }
             }
         }
+
+        /// <summary>
+        /// 解約可能かどうかを判定
+        /// 契約開始から1年後から解約可能
+        /// </summary>
+        [NotMapped]
+        public bool CanCancelContract
+        {
+            get
+            {
+                return ContractStartDate.AddYears(1) <= DateTime.Now && 
+                       ContractStatus == ContractStatus.Active;
+            }
+        }
+
+        /// <summary>
+        /// 契約満了日を計算（1年後）
+        /// </summary>
+        [NotMapped]
+        public DateTime ContractMaturityDate
+        {
+            get
+            {
+                return ContractStartDate.AddYears(1);
+            }
+        }
     }
 
     public enum DistributorType
@@ -133,5 +184,62 @@ namespace shelf_project.Models
         /// チェーン店支店・店舗
         /// </summary>
         Store = 2
+    }
+
+    /// <summary>
+    /// 棚返却状況
+    /// </summary>
+    public enum ShelfReturnStatus
+    {
+        /// <summary>
+        /// 返却不要（契約中）
+        /// </summary>
+        NotRequired = 0,
+
+        /// <summary>
+        /// 返却予定
+        /// </summary>
+        Scheduled = 1,
+
+        /// <summary>
+        /// 返却期限超過
+        /// </summary>
+        Overdue = 2,
+
+        /// <summary>
+        /// 返却完了
+        /// </summary>
+        Completed = 3
+    }
+
+    /// <summary>
+    /// 契約ステータス
+    /// </summary>
+    public enum ContractStatus
+    {
+        /// <summary>
+        /// 契約中（アクティブ）
+        /// </summary>
+        Active = 0,
+
+        /// <summary>
+        /// 解約申請中
+        /// </summary>
+        CancellationRequested = 1,
+
+        /// <summary>
+        /// 棚返却待ち
+        /// </summary>
+        PendingShelfReturn = 2,
+
+        /// <summary>
+        /// 解約完了
+        /// </summary>
+        Cancelled = 3,
+
+        /// <summary>
+        /// 一時停止
+        /// </summary>
+        Suspended = 4
     }
 }

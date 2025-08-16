@@ -42,19 +42,6 @@
                             }
                         </div>
                     </div>
-                    <div class="col-md-4 text-end">
-                        <div class="btn-group" role="group">
-                            @if (Model.Company != null && Model.Company.CompanyType == CompanyType.Chain && Model.DistributorType == DistributorType.HeadOffice)
-                            {
-                                <a href="@Url.Action("Locations", "Company")" class="btn btn-primary">
-                                    <i class="bi bi-building-gear"></i> チェーン店管理
-                                </a>
-                            }
-                            <a href="@Url.Action("Settings")" class="btn btn-outline-secondary">
-                                <i class="bi bi-gear"></i> 設定
-                            </a>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -96,11 +83,11 @@
                             <i class="bi bi-box-seam fs-2 text-info"></i>
                         </div>
                     </div>
-                    <h6 class="text-muted mb-1">選定商品数</h6>
+                    <h6 class="text-muted mb-1">QRコード商品数</h6>
                     <h4 class="text-info mb-0">
-                        @(Model.DistributorProducts?.Count(dp => dp.IsActive) ?? 0) / @Model.EffectiveProductSelectionCount
+                        @(Model.QRCodes?.SelectMany(q => q.QRCodeProducts ?? new List<QRCodeProduct>()).Count(qcp => qcp.IsActive) ?? 0)
                     </h4>
-                    <small class="text-muted">商品</small>
+                    <small class="text-muted">登録済み</small>
                 </div>
             </div>
         </div>
@@ -183,27 +170,14 @@
                     <div class="row g-3">
                         <!-- 主要操作 -->
                         <div class="col-md-4">
-                            <a href="@Url.Action("Products")" class="text-decoration-none">
+                            <a href="@Url.Action("QRCodes", new { locationId = Model.Id })" class="text-decoration-none">
                                 <div class="card h-100 border-primary border-opacity-25 hover-shadow">
                                     <div class="card-body text-center">
                                         <div class="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
-                                            <i class="bi bi-box-seam fs-4 text-primary"></i>
+                                            <i class="bi bi-qr-code fs-4 text-primary"></i>
                                         </div>
-                                        <h6 class="card-title text-primary">商品管理</h6>
-                                        <p class="card-text text-muted small">商品の選定・変更</p>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-md-4">
-                            <a href="@Url.Action("QRCodes", new { locationId = Model.Id })" class="text-decoration-none">
-                                <div class="card h-100 border-secondary border-opacity-25 hover-shadow">
-                                    <div class="card-body text-center">
-                                        <div class="bg-secondary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
-                                            <i class="bi bi-qr-code fs-4 text-secondary"></i>
-                                        </div>
-                                        <h6 class="card-title text-secondary">QRコード</h6>
-                                        <p class="card-text text-muted small">QRコード生成・管理</p>
+                                        <h6 class="card-title text-primary">QRコード・商品管理</h6>
+                                        <p class="card-text text-muted small">QRコード生成・商品選定</p>
                                     </div>
                                 </div>
                             </a>
@@ -236,6 +210,35 @@
                             </a>
                         </div>
                         <div class="col-md-4">
+                            <a href="@Url.Action("Index", "Contract")" class="text-decoration-none">
+                                <div class="card h-100 border-warning border-opacity-25 hover-shadow">
+                                    <div class="card-body text-center">
+                                        <div class="bg-warning bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-file-earmark-text fs-4 text-warning"></i>
+                                        </div>
+                                        <h6 class="card-title text-warning">契約情報</h6>
+                                        <p class="card-text text-muted small">契約詳細・解約申請</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        @if (Model.Company != null && Model.Company.CompanyType == CompanyType.Chain && Model.DistributorType == DistributorType.HeadOffice)
+                        {
+                            <div class="col-md-4">
+                                <a href="@Url.Action("Locations", "Company")" class="text-decoration-none">
+                                    <div class="card h-100 border-primary border-opacity-25 hover-shadow">
+                                        <div class="card-body text-center">
+                                            <div class="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                                                <i class="bi bi-building-gear fs-4 text-primary"></i>
+                                            </div>
+                                            <h6 class="card-title text-primary">チェーン店管理</h6>
+                                            <p class="card-text text-muted small">拠点管理・統括機能</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                        <div class="col-md-4">
                             <a href="@Url.Action("Settings")" class="text-decoration-none">
                                 <div class="card h-100 border-dark border-opacity-25 hover-shadow">
                                     <div class="card-body text-center">
@@ -243,7 +246,7 @@
                                             <i class="bi bi-gear fs-4 text-dark"></i>
                                         </div>
                                         <h6 class="card-title text-dark">設定</h6>
-                                        <p class="card-text text-muted small">アカウント・契約設定</p>
+                                        <p class="card-text text-muted small">アカウント・店舗設定</p>
                                     </div>
                                 </div>
                             </a>

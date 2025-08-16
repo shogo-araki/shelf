@@ -193,25 +193,26 @@
                                             }
                                         </div>
                                         
-                                        @if (location.DistributorType == DistributorType.Store)
+                                        <a href="@Url.Action("Index", "Contract", new { locationId = location.Id })" class="btn btn-outline-info btn-sm w-100">
+                                            <i class="bi bi-file-earmark-text"></i> 契約情報・解約
+                                        </a>
+                                        @if (location.ContractStatus != ContractStatus.Active)
                                         {
-                                            var hasSales = location.Sales?.Any() == true;
-                                            @if (hasSales)
-                                            {
-                                                <small class="text-muted">
-                                                    <i class="bi bi-info-circle"></i> 売上履歴があるため削除できません
-                                                </small>
-                                            }
-                                            else
-                                            {
-                                                <form asp-action="DeleteLocation" method="post" 
-                                                      onsubmit="return confirm('拠点「@location.LocationName」を削除しますか？\n関連するQRコードと商品登録も全て削除されます。\nこの操作は取り消せません。')">
-                                                    <input type="hidden" name="locationId" value="@location.Id" />
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
-                                                        <i class="bi bi-trash"></i> 拠点削除
-                                                    </button>
-                                                </form>
-                                            }
+                                            <small class="text-muted mt-1 d-block">
+                                                <i class="bi bi-info-circle"></i> 
+                                                @switch (location.ContractStatus)
+                                                {
+                                                    case ContractStatus.CancellationRequested:
+                                                        <span class="text-warning">解約申請中</span>
+                                                        break;
+                                                    case ContractStatus.PendingShelfReturn:
+                                                        <span class="text-info">棚返却確認中</span>
+                                                        break;
+                                                    case ContractStatus.Cancelled:
+                                                        <span class="text-secondary">解約済み</span>
+                                                        break;
+                                                }
+                                            </small>
                                         }
                                     </div>
                                 </div>

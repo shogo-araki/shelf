@@ -1,0 +1,220 @@
+@model IEnumerable<Distributor>
+@{
+    ViewData["Title"] = "契約管理（管理者）";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-list-task"></i> 契約管理（管理者）</h1>
+        <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 管理者ダッシュボードに戻る
+        </a>
+    </div>
+
+    <!-- 統計サマリー -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>契約中</h5>
+                    <h2>@Model.Count(d => d.ContractStatus == ContractStatus.Active)</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5>解約申請中</h5>
+                    <h2>@Model.Count(d => d.ContractStatus == ContractStatus.CancellationRequested)</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5>返却期限超過</h5>
+                    <h2>@Model.Count(d => d.ShelfReturnStatus == ShelfReturnStatus.Overdue)</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>返却確認中</h5>
+                    <h2>@Model.Count(d => d.ContractStatus == ContractStatus.PendingShelfReturn)</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 契約一覧テーブル -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-table"></i> 全契約一覧</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>代理店名</th>
+                            <th>契約開始日</th>
+                            <th>契約満了日</th>
+                            <th>契約ステータス</th>
+                            <th>棚返却状況</th>
+                            <th>解約申請日</th>
+                            <th>棚返却予定日</th>
+                            <th>棚返却完了日</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var distributor in Model)
+                        {
+                            <tr class="@GetRowClass(distributor.ContractStatus, distributor.ShelfReturnStatus)">
+                                <td>
+                                    <strong>@distributor.CompanyName</strong><br>
+                                    <small class="text-muted">@distributor.User?.Email</small>
+                                </td>
+                                <td>@distributor.ContractStartDate.ToString("yyyy/MM/dd")</td>
+                                <td>@distributor.ContractMaturityDate.ToString("yyyy/MM/dd")</td>
+                                <td>
+                                    @switch (distributor.ContractStatus)
+                                    {
+                                        case ContractStatus.Active:
+                                            <span class="badge bg-success">契約中</span>
+                                            break;
+                                        case ContractStatus.CancellationRequested:
+                                            <span class="badge bg-warning">解約申請中</span>
+                                            break;
+                                        case ContractStatus.PendingShelfReturn:
+                                            <span class="badge bg-info">棚返却確認中</span>
+                                            break;
+                                        case ContractStatus.Cancelled:
+                                            <span class="badge bg-secondary">解約済み</span>
+                                            break;
+                                        case ContractStatus.Suspended:
+                                            <span class="badge bg-danger">一時停止</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    @switch (distributor.ShelfReturnStatus)
+                                    {
+                                        case ShelfReturnStatus.NotRequired:
+                                            <span class="badge bg-secondary">返却不要</span>
+                                            break;
+                                        case ShelfReturnStatus.Scheduled:
+                                            <span class="badge bg-primary">返却予定</span>
+                                            break;
+                                        case ShelfReturnStatus.Overdue:
+                                            <span class="badge bg-danger">期限超過</span>
+                                            break;
+                                        case ShelfReturnStatus.Completed:
+                                            <span class="badge bg-success">返却完了</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    @if (distributor.CancellationRequestDate.HasValue)
+                                    {
+                                        @distributor.CancellationRequestDate.Value.ToString("yyyy/MM/dd")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (distributor.ShelfReturnDueDate.HasValue)
+                                    {
+                                        @distributor.ShelfReturnDueDate.Value.ToString("yyyy/MM/dd")
+                                        @if (distributor.ShelfReturnDueDate.Value < DateTime.Now && 
+                                             distributor.ShelfReturnStatus != ShelfReturnStatus.Completed)
+                                        {
+                                            <br><small class="text-danger">期限超過</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (distributor.ShelfReturnedDate.HasValue)
+                                    {
+                                        @distributor.ShelfReturnedDate.Value.ToString("yyyy/MM/dd")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group-vertical" role="group">
+                                        @if (distributor.ShelfReturnStatus == ShelfReturnStatus.Completed && 
+                                             distributor.ContractStatus == ContractStatus.PendingShelfReturn)
+                                        {
+                                            <form asp-action="CompleteCancellation" method="post" class="d-inline">
+                                                <input type="hidden" name="distributorId" value="@distributor.Id" />
+                                                <button type="submit" class="btn btn-success btn-sm mb-1"
+                                                        onclick="return confirm('契約解約を完了しますか？')">
+                                                    <i class="bi bi-check-circle"></i> 解約完了
+                                                </button>
+                                            </form>
+                                        }
+
+                                        @if (distributor.ShelfReturnDueDate.HasValue && 
+                                             distributor.ShelfReturnDueDate.Value < DateTime.Now && 
+                                             distributor.ShelfReturnStatus == ShelfReturnStatus.Scheduled)
+                                        {
+                                            <form asp-action="MarkOverdue" method="post" class="d-inline">
+                                                <input type="hidden" name="distributorId" value="@distributor.Id" />
+                                                <button type="submit" class="btn btn-warning btn-sm"
+                                                        onclick="return confirm('期限超過にマークしますか？')">
+                                                    <i class="bi bi-exclamation-triangle"></i> 期限超過
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注意事項 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 管理者向け注意事項</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-dot"></i> 棚返却完了報告があった場合は、物理的な返却確認後に「解約完了」ボタンを押してください。</li>
+                        <li class="mb-2"><i class="bi bi-dot"></i> 棚返却期限を過ぎた場合は「期限超過」ボタンで状況を更新できます。</li>
+                        <li class="mb-2"><i class="bi bi-dot"></i> 解約完了処理を行うと、該当アカウントは無効化されます。</li>
+                        <li class="mb-2"><i class="bi bi-dot"></i> 赤色の行は何らかの注意が必要な契約です。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetRowClass(ContractStatus contractStatus, ShelfReturnStatus shelfReturnStatus)
+    {
+        if (shelfReturnStatus == ShelfReturnStatus.Overdue)
+            return "table-danger";
+        if (contractStatus == ContractStatus.CancellationRequested)
+            return "table-warning";
+        if (contractStatus == ContractStatus.PendingShelfReturn)
+            return "table-info";
+        return "";
+    }
+}

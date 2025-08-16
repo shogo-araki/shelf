@@ -71,7 +71,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h5>現在の選定状況 (@assignedProducts.Count / @maxProducts)</h5>
+                    <h5>現在の選定状況 (@assignedProducts.Count)</h5>
                 </div>
                 <div class="card-body">
                     @if (assignedProducts.Any())
@@ -106,14 +106,12 @@
     </div>
     
     <!-- Available Products -->
-    @if (assignedProducts.Count < maxProducts)
-    {
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>@manufacturer.CompanyName の商品 (あと@(maxProducts - assignedProducts.Count)商品選定できます)</h5>
-                    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>@manufacturer.CompanyName の商品（制限なし）</h5>
+                </div>
                     <div class="card-body">
                         @if (Model.Any())
                         {
@@ -182,15 +180,7 @@
                 </div>
             </div>
         </div>
-    }
-    else
-    {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> 
-            選択可能な商品数の上限に達しています。新しい商品を選定するには、既存の商品を削除してください。
-            <a asp-action="Products" class="btn btn-sm btn-outline-primary ms-3">商品管理画面へ</a>
-        </div>
-    }
+    </div>
 </div>
 
 @if (TempData["Success"] != null)
