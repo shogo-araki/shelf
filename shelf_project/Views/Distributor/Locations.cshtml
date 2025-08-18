@@ -86,11 +86,11 @@
                                         <span class="text-muted">@(Model.PhoneNumber ?? "未設定")</span>
                                     </div>
                                     <div class="col-md-3">
-                                        <strong>QRコード数:</strong><br>
-                                        <span class="text-muted">@(Model.QRCodes?.Count ?? 0) 個</span>
+                                        <strong>QRコード:</strong><br>
+                                        <span class="text-muted">@(Model.QRCode != null ? "生成済み" : "未生成")</span>
                                     </div>
                                     <div class="col-md-2">
-                                        <a href="@Url.Action("QRCodes")" class="btn btn-outline-primary btn-sm">
+                                        <a href="@Url.Action("QRCodes", "QR")" class="btn btn-outline-primary btn-sm">
                                             <i class="bi bi-qr-code"></i> QR管理
                                         </a>
                                     </div>
@@ -128,8 +128,8 @@
                                         </div>
                                         <div class="row mt-2">
                                             <div class="col-md-6">
-                                                <strong>QRコード数:</strong><br>
-                                                <small class="text-muted">@(location.QRCodes?.Count ?? 0) 個</small>
+                                                <strong>QRコード:</strong><br>
+                                                <small class="text-muted">@(location.QRCode != null ? "生成済み" : "未生成")</small>
                                             </div>
                                             <div class="col-md-6">
                                                 <strong>作成日:</strong><br>
@@ -181,11 +181,11 @@
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <strong>QRコード数:</strong><br>
-                                <span class="text-muted">@(Model.QRCodes?.Count ?? 0) 個</span>
+                                <strong>QRコード:</strong><br>
+                                <span class="text-muted">@(Model.QRCode != null ? "生成済み" : "未生成")</span>
                             </div>
                             <div class="col-md-6">
-                                <a href="@Url.Action("QRCodes")" class="btn btn-outline-primary">
+                                <a href="@Url.Action("QRCodes", "QR")" class="btn btn-outline-primary">
                                     <i class="bi bi-qr-code"></i> QRコード管理
                                 </a>
                             </div>

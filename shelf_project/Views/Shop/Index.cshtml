@@ -39,7 +39,7 @@
                     <p>全国の代理店が選んだ、品質の高い商品をお楽しみください。</p>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    @if (!User.Identity.IsAuthenticated)
+                    @if (User.Identity?.IsAuthenticated != true)
                     {
                         <a asp-action="Register" class="btn btn-light btn-lg">会員登録</a>
                         <a asp-action="Login" class="btn btn-outline-light btn-lg">ログイン</a>

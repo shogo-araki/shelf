@@ -1,0 +1,45 @@
+@model IEnumerable<shelf_project.Models.Manufacturer>
+@{
+    ViewData["Title"] = "メーカー管理";
+}
+
+<div class="container-fluid">
+    <h1>メーカー管理</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>会社名</th>
+                            <th>ユーザー</th>
+                            <th>住所</th>
+                            <th>ステータス</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var manufacturer in Model)
+                        {
+                            <tr>
+                                <td>@manufacturer.CompanyName</td>
+                                <td>@manufacturer.User?.Email</td>
+                                <td>@manufacturer.Address</td>
+                                <td>
+                                    @if (manufacturer.IsActive)
+                                    {
+                                        <span class="badge bg-success">有効</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">無効</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -142,15 +142,14 @@
                                     <!-- QRコード情報 -->
                                     <div class="mb-3">
                                         <h6>QRコード</h6>
-                                        @if (location.QRCodes?.Any(q => q.IsActive) == true)
+                                        @if (location.QRCode != null)
                                         {
-                                            var qrCode = location.QRCodes.First(q => q.IsActive);
                                             <div class="d-flex align-items-center">
                                                 <span class="badge bg-success me-2">生成済み</span>
-                                                <code class="bg-light px-2 py-1 rounded">@qrCode.Code</code>
+                                                <code class="bg-light px-2 py-1 rounded">@location.QRCode.Code</code>
                                             </div>
                                             <div class="mt-2">
-                                                <small class="text-muted">設置場所: @qrCode.Location</small>
+                                                <small class="text-muted">設置場所: @location.QRCode.Location</small>
                                             </div>
                                         }
                                         else
@@ -184,9 +183,9 @@
                                     <!-- アクション -->
                                     <div class="d-flex flex-column gap-2">
                                         <div class="d-flex gap-2">
-                                            @if (location.QRCodes?.Any(q => q.IsActive) == true)
+                                            @if (location.QRCode != null)
                                             {
-                                                <a href="/shop/@location.QRCodes.First(q => q.IsActive).Code" 
+                                                <a href="/shop/@location.QRCode.Code" 
                                                    class="btn btn-outline-primary btn-sm" target="_blank">
                                                     <i class="bi bi-eye"></i> ECサイト確認
                                                 </a>

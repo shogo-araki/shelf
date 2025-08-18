@@ -1,0 +1,291 @@
+@model List<shelf_project.Models.Order>
+
+@{
+    ViewData["Title"] = "注文管理";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">注文管理</h1>
+        <div>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> ダッシュボードに戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- フィルター -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label">ステータス</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">すべて</option>
+                                <option value="Pending">注文確認待ち</option>
+                                <option value="Confirmed">注文確認済み</option>
+                                <option value="Shipped">発送済み</option>
+                                <option value="Delivered">配送完了</option>
+                                <option value="Cancelled">キャンセル</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="dateFrom" class="form-label">開始日</label>
+                            <input type="date" class="form-control" id="dateFrom">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="dateTo" class="form-label">終了日</label>
+                            <input type="date" class="form-control" id="dateTo">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary">フィルター適用</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model?.Any() == true)
+    {
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">注文一覧 (@Model.Count 件)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>注文番号</th>
+                                        <th>注文日</th>
+                                        <th>代理店</th>
+                                        <th>商品</th>
+                                        <th>合計金額</th>
+                                        <th>ステータス</th>
+                                        <th>追跡番号</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var order in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@order.OrderNumber</strong>
+                                            </td>
+                                            <td>@order.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                            <td>
+                                                @if (order.Distributor?.User != null)
+                                                {
+                                                    <div>
+                                                        <strong>@order.Distributor.CompanyName</strong>
+                                                        <br>
+                                                        <small class="text-muted">@order.Distributor.User.UserName</small>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (order.OrderItems?.Any() == true)
+                                                {
+                                                    @foreach (var item in order.OrderItems)
+                                                    {
+                                                        <div class="mb-1">
+                                                            <strong>@item.Product?.Name</strong>
+                                                            <span class="text-muted">× @item.Quantity</span>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">商品情報なし</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <strong>¥@order.TotalAmount.ToString("N0")</strong>
+                                            </td>
+                                            <td>
+                                                @switch (order.Status)
+                                                {
+                                                    case shelf_project.Models.OrderStatus.Pending:
+                                                        <span class="badge bg-warning">注文確認待ち</span>
+                                                        break;
+                                                    case shelf_project.Models.OrderStatus.Processing:
+                                                        <span class="badge bg-info">処理中</span>
+                                                        break;
+                                                    case shelf_project.Models.OrderStatus.Shipped:
+                                                        <span class="badge bg-primary">発送済み</span>
+                                                        break;
+                                                    case shelf_project.Models.OrderStatus.Delivered:
+                                                        <span class="badge bg-success">配送完了</span>
+                                                        break;
+                                                    case shelf_project.Models.OrderStatus.Cancelled:
+                                                        <span class="badge bg-danger">キャンセル</span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge bg-secondary">不明</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(order.TrackingNumber))
+                                                {
+                                                    <code>@order.TrackingNumber</code>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    @if (order.Status == shelf_project.Models.OrderStatus.Pending)
+                                                    {
+                                                        <button type="button" class="btn btn-outline-success" onclick="updateOrderStatus(@order.Id, 'Processing')">
+                                                            処理開始
+                                                        </button>
+                                                    }
+                                                    @if (order.Status == shelf_project.Models.OrderStatus.Processing)
+                                                    {
+                                                        <button type="button" class="btn btn-outline-primary" onclick="showShippingModal(@order.Id)">
+                                                            発送
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="text-muted mt-3">注文がありません</h4>
+                        <p class="text-muted">現在処理中の注文はありません。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- 発送モーダル -->
+<div class="modal fade" id="shippingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">商品発送</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="shippingForm">
+                    <input type="hidden" id="shippingOrderId" name="orderId">
+                    <div class="mb-3">
+                        <label for="trackingNumber" class="form-label">追跡番号</label>
+                        <input type="text" class="form-control" id="trackingNumber" name="trackingNumber" placeholder="例: 1234-5678-9012">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="submitShipping()">発送完了</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateOrderStatus(orderId, status) {
+    if (confirm('注文ステータスを更新しますか？')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '@Url.Action("UpdateOrderStatus", "OrderManagement")';
+        
+        const orderIdInput = document.createElement('input');
+        orderIdInput.type = 'hidden';
+        orderIdInput.name = 'orderId';
+        orderIdInput.value = orderId;
+        form.appendChild(orderIdInput);
+        
+        const statusInput = document.createElement('input');
+        statusInput.type = 'hidden';
+        statusInput.name = 'status';
+        statusInput.value = status;
+        form.appendChild(statusInput);
+        
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = '__RequestVerificationToken';
+        tokenInput.value = '@Html.AntiForgeryToken()'.split('value="')[1].split('"')[0];
+        form.appendChild(tokenInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function showShippingModal(orderId) {
+    document.getElementById('shippingOrderId').value = orderId;
+    const modal = new bootstrap.Modal(document.getElementById('shippingModal'));
+    modal.show();
+}
+
+function submitShipping() {
+    const orderId = document.getElementById('shippingOrderId').value;
+    const trackingNumber = document.getElementById('trackingNumber').value;
+    
+    if (!trackingNumber.trim()) {
+        alert('追跡番号を入力してください。');
+        return;
+    }
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '@Url.Action("UpdateOrderStatus", "OrderManagement")';
+    
+    const orderIdInput = document.createElement('input');
+    orderIdInput.type = 'hidden';
+    orderIdInput.name = 'orderId';
+    orderIdInput.value = orderId;
+    form.appendChild(orderIdInput);
+    
+    const statusInput = document.createElement('input');
+    statusInput.type = 'hidden';
+    statusInput.name = 'status';
+    statusInput.value = 'Shipped';
+    form.appendChild(statusInput);
+    
+    const trackingInput = document.createElement('input');
+    trackingInput.type = 'hidden';
+    trackingInput.name = 'trackingNumber';
+    trackingInput.value = trackingNumber;
+    form.appendChild(trackingInput);
+    
+    const tokenInput = document.createElement('input');
+    tokenInput.type = 'hidden';
+    tokenInput.name = '__RequestVerificationToken';
+    tokenInput.value = '@Html.AntiForgeryToken()'.split('value="')[1].split('"')[0];
+    form.appendChild(tokenInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>

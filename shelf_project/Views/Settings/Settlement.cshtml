@@ -1,0 +1,130 @@
+@model List<shelf_project.Models.Distributor>
+
+@{
+    ViewData["Title"] = "売上清算";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">売上清算</h1>
+        <div>
+            <a href="@Url.Action("Index", "Distributor")" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> ダッシュボードに戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- 清算期間選択 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">清算期間</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="startDate" class="form-label">開始日</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endDate" class="form-label">終了日</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-primary">清算データ更新</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清算サマリー -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-currency-yen text-primary fs-3"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">総売上</h6>
+                    <h4 class="text-primary mb-0">¥0</h4>
+                    <small class="text-muted">今月</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="bg-success bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-percent text-success fs-3"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">手数料</h6>
+                    <h4 class="text-success mb-0">¥0</h4>
+                    <small class="text-muted">プラットフォーム手数料</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="bg-info bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-calculator text-info fs-3"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">清算額</h6>
+                    <h4 class="text-info mb-0">¥0</h4>
+                    <small class="text-muted">手数料差引後</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="bg-warning bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-clock text-warning fs-3"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">未清算額</h6>
+                    <h4 class="text-warning mb-0">¥0</h4>
+                    <small class="text-muted">処理待ち</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清算履歴 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">清算履歴</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-5">
+                        <i class="bi bi-receipt text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="text-muted mt-3">清算機能は開発中です</h4>
+                        <p class="text-muted">売上清算機能は今後実装予定です。<br>現在は手動での清算処理を行っております。</p>
+                        <div class="mt-4">
+                            <button type="button" class="btn btn-outline-primary" disabled>
+                                <i class="bi bi-download"></i> 清算データダウンロード
+                            </button>
+                            <button type="button" class="btn btn-outline-success" disabled>
+                                <i class="bi bi-bank"></i> 銀行振込申請
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 現在の月の開始日と終了日を設定
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('endDate').value = lastDay.toISOString().split('T')[0];
+});
+</script>

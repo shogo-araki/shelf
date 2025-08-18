@@ -1,0 +1,564 @@
+@model IEnumerable<shelf_project.Models.QRCodeProduct>
+@{
+    ViewData["Title"] = "QRコード商品管理";
+    var qrCode = ViewBag.QRCode as shelf_project.Models.QRCode;
+    var availableProducts = ViewBag.AvailableProducts as List<shelf_project.Models.Product> ?? new List<shelf_project.Models.Product>();
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>QRコード商品管理</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("QRCodes", "QR")">QRコード管理</a></li>
+                    <li class="breadcrumb-item active">@qrCode?.Location - 商品管理</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="@Url.Action("QRCodes", "QR", new { locationId = qrCode?.DistributorId })" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> QRコード一覧に戻る
+        </a>
+    </div>
+
+    <!-- QR Code Info -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5><i class="bi bi-qr-code"></i> QRコード情報</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>設置場所:</strong><br>
+                    <span class="text-muted">@qrCode?.Location</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>QRコード:</strong><br>
+                    <code class="bg-light px-2 py-1 rounded">@qrCode?.Code</code>
+                </div>
+                <div class="col-md-3">
+                    <strong>登録商品数:</strong><br>
+                    <span class="badge @(Model.Count() >= qrCode?.Distributor?.ProductSelectionCount ? "bg-warning" : "bg-success")">@Model.Count() / @(qrCode?.Distributor?.ProductSelectionCount ?? 5) 商品</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>ステータス:</strong><br>
+                    <span class="badge @(qrCode?.IsActive == true ? "bg-success" : "bg-secondary")">
+                        @(qrCode?.IsActive == true ? "有効" : "無効")
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Search & Selection -->
+    @if (Model.Count() < (qrCode?.Distributor?.ProductSelectionCount ?? 5))
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-search"></i> 商品検索・選定 (あと@((qrCode?.Distributor?.ProductSelectionCount ?? 5) - Model.Count())商品追加可能)</h5>
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#productSearchPanel" aria-expanded="false">
+                        <i class="bi bi-funnel"></i> 詳細フィルタ
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Search Filters -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label">商品名検索</label>
+                        <input type="text" class="form-control" id="searchName" placeholder="商品名で検索...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">メーカー</label>
+                        <select class="form-select" id="searchManufacturer">
+                            <option value="">すべてのメーカー</option>
+                            @foreach (var manufacturer in availableProducts.Select(p => p.Manufacturer).Where(m => m != null).Distinct())
+                            {
+                                <option value="@manufacturer.Id">@manufacturer.CompanyName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">カテゴリー</label>
+                        <select class="form-select" id="searchCategory">
+                            <option value="">すべて</option>
+                            @foreach (var category in availableProducts.Select(p => p.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct())
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">価格帯</label>
+                        <select class="form-select" id="searchPriceRange">
+                            <option value="">すべて</option>
+                            <option value="0-1000">¥1,000未満</option>
+                            <option value="1000-3000">¥1,000-¥3,000</option>
+                            <option value="3000-5000">¥3,000-¥5,000</option>
+                            <option value="5000-">¥5,000以上</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary w-100" onclick="filterProducts()">
+                            <i class="bi bi-search"></i> 検索
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters Collapse -->
+                <div class="collapse" id="productSearchPanel">
+                    <div class="card card-body border-light mb-4">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">利益率順</label>
+                                <select class="form-select" id="sortProfitMargin">
+                                    <option value="">並び替えなし</option>
+                                    <option value="high">利益率高い順</option>
+                                    <option value="low">利益率低い順</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="requiresRefrigeration">
+                                    <label class="form-check-label" for="requiresRefrigeration">
+                                        冷蔵商品のみ
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="requiresFreezing">
+                                    <label class="form-check-label" for="requiresFreezing">
+                                        冷凍商品のみ
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="inStock">
+                                    <label class="form-check-label" for="inStock">
+                                        在庫有りのみ
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Results Grid -->
+                <div class="row" id="productResults">
+                    <div class="col-12 text-center py-4">
+                        <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">上記の条件で商品を検索してください</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning mb-4">
+            <h6><i class="bi bi-exclamation-triangle"></i> 商品選定数上限に達しています</h6>
+            <p class="mb-0">このQRコードには最大@(qrCode?.Distributor?.ProductSelectionCount ?? 5)商品まで登録できます。新しい商品を追加するには、既存の商品を削除してください。</p>
+        </div>
+    }
+
+    <!-- Products List -->
+    <div class="card">
+        <div class="card-header">
+            <h5>登録商品一覧</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="row">
+                    @foreach (var qrCodeProduct in Model)
+                    {
+                        <div class="col-lg-6 col-md-12 mb-3">
+                            <div class="card h-100 border-info">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <strong>
+                                            <a href="@Url.Action("Product", "Shop", new { id = qrCodeProduct.Product?.Id, qr = qrCode?.Code })" 
+                                               class="text-decoration-none text-dark" target="_blank">
+                                                @qrCodeProduct.Product?.Name
+                                                <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                            </a>
+                                        </strong>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <p class="card-text">
+                                                <strong>メーカー:</strong> @qrCodeProduct.Product?.Manufacturer?.CompanyName<br>
+                                                <strong>価格:</strong> ¥@qrCodeProduct.Product?.RetailPrice.ToString("N0")<br>
+                                                @if (!string.IsNullOrEmpty(qrCodeProduct.Notes))
+                                                {
+                                                    <strong>メモ:</strong> @qrCodeProduct.Notes<br>
+                                                }
+                                                <strong>登録日:</strong> @qrCodeProduct.AssignedAt.ToString("yyyy/MM/dd")
+                                            </p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            @if (!string.IsNullOrEmpty(qrCodeProduct.Product?.ImageUrl))
+                                            {
+                                                <img src="@qrCodeProduct.Product.ImageUrl" alt="@qrCodeProduct.Product.Name" 
+                                                     class="img-fluid rounded" style="max-height: 80px;">
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 80px;">
+                                                    <i class="bi bi-image text-muted"></i>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">
+                                            @if (qrCodeProduct.Product?.Category != null)
+                                            {
+                                                <span class="badge bg-light text-dark">@qrCodeProduct.Product.Category</span>
+                                            }
+                                        </small>
+                                        <form asp-action="RemoveProductFromQRCode" method="post" style="display: inline;" 
+                                              onsubmit="return confirm('この商品をQRコードから削除しますか？')">
+                                            <input type="hidden" name="qrCodeProductId" value="@qrCodeProduct.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i class="bi bi-trash"></i> 削除
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-box-seam display-4 text-muted"></i>
+                    <h4 class="mt-3 text-muted">登録商品がありません</h4>
+                    <p class="text-muted">上のフォームから商品を追加してください。</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="alert alert-info mt-4">
+        <h6><i class="bi bi-info-circle"></i> QRコード商品管理について</h6>
+        <ul class="mb-0">
+            <li>各QRコードに最大@(qrCode?.Distributor?.ProductSelectionCount ?? 5)商品まで登録できます</li>
+            <li>お客様がQRコードを読み取ると、ここで設定した商品が表示されます</li>
+            <li>商品にメモを追加して、おすすめポイントなどを記載できます</li>
+        </ul>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<script>
+// 利用可能商品データをJavaScript変数に格納
+const availableProducts = @Html.Raw(Json.Serialize(ViewBag.AvailableProductsJs ?? new List<object>()));
+
+// 検索条件の保存・復元関数
+function saveCurrentSearchFilters() {
+    const filters = {
+        searchName: document.getElementById('searchName').value,
+        searchManufacturer: document.getElementById('searchManufacturer').value,
+        searchCategory: document.getElementById('searchCategory').value,
+        searchPriceRange: document.getElementById('searchPriceRange').value,
+        sortProfitMargin: document.getElementById('sortProfitMargin').value,
+        requiresRefrigeration: document.getElementById('requiresRefrigeration').checked,
+        requiresFreezing: document.getElementById('requiresFreezing').checked,
+        inStock: document.getElementById('inStock').checked
+    };
+    sessionStorage.setItem('qrProductFilters', JSON.stringify(filters));
+}
+
+function restoreSearchFilters() {
+    const savedFilters = sessionStorage.getItem('qrProductFilters');
+    if (savedFilters) {
+        const filters = JSON.parse(savedFilters);
+        document.getElementById('searchName').value = filters.searchName || '';
+        document.getElementById('searchManufacturer').value = filters.searchManufacturer || '';
+        document.getElementById('searchCategory').value = filters.searchCategory || '';
+        document.getElementById('searchPriceRange').value = filters.searchPriceRange || '';
+        document.getElementById('sortProfitMargin').value = filters.sortProfitMargin || '';
+        document.getElementById('requiresRefrigeration').checked = filters.requiresRefrigeration || false;
+        document.getElementById('requiresFreezing').checked = filters.requiresFreezing || false;
+        document.getElementById('inStock').checked = filters.inStock || false;
+        
+        // セッションストレージから削除
+        sessionStorage.removeItem('qrProductFilters');
+        
+        // フィルタを適用
+        filterProducts();
+    }
+}
+
+// 検索・フィルタリング関数
+function filterProducts() {
+    
+    const searchName = document.getElementById('searchName').value.toLowerCase().trim();
+    const searchManufacturer = document.getElementById('searchManufacturer').value;
+    const searchCategory = document.getElementById('searchCategory').value;
+    const searchPriceRange = document.getElementById('searchPriceRange').value;
+    const sortProfitMargin = document.getElementById('sortProfitMargin').value;
+    const requiresRefrigeration = document.getElementById('requiresRefrigeration').checked;
+    const requiresFreezing = document.getElementById('requiresFreezing').checked;
+    const inStock = document.getElementById('inStock').checked;
+
+
+    // フィルタ条件をチェック
+    const hasFilters = searchName || searchManufacturer || searchCategory || searchPriceRange || 
+                       requiresRefrigeration || requiresFreezing || inStock;
+    
+    let filteredProducts;
+    
+    if (!hasFilters) {
+        // 条件がない場合も全商品を対象とする（将来的な条件用）
+        filteredProducts = [...availableProducts];
+    } else {
+        filteredProducts = availableProducts.filter(product => {
+            // 商品名フィルタ
+            if (searchName && !product.name.toLowerCase().includes(searchName)) {
+                return false;
+            }
+            
+            // メーカーフィルタ
+            if (searchManufacturer && product.manufacturerId != searchManufacturer) {
+                return false;
+            }
+            
+            // カテゴリーフィルタ
+            if (searchCategory && product.category !== searchCategory) {
+                return false;
+            }
+            
+            // 価格帯フィルタ
+            if (searchPriceRange) {
+                const retailPrice = product.retailPrice || 0;
+                const [min, max] = searchPriceRange.split('-');
+                if (min && retailPrice < parseInt(min)) {
+                    return false;
+                }
+                if (max && retailPrice > parseInt(max)) {
+                    return false;
+                }
+                if (searchPriceRange === '5000-' && retailPrice < 5000) {
+                    return false;
+                }
+            }
+            
+            // 冷蔵・冷凍フィルタ
+            if (requiresRefrigeration && !product.requiresRefrigeration) {
+                return false;
+            }
+            if (requiresFreezing && !product.requiresFreezing) {
+                return false;
+            }
+            
+            // 在庫フィルタ
+            if (inStock && (product.stockQuantity || 0) <= 0) {
+                return false;
+            }
+            
+            return true;
+        });
+    }
+
+    // 並び替え
+    if (sortProfitMargin === 'high') {
+        filteredProducts.sort((a, b) => (b.ProfitMargin || 0) - (a.ProfitMargin || 0));
+    } else if (sortProfitMargin === 'low') {
+        filteredProducts.sort((a, b) => (a.ProfitMargin || 0) - (b.ProfitMargin || 0));
+    }
+
+    displayProducts(filteredProducts);
+}
+
+// 商品表示関数
+function displayProducts(products) {
+    const resultsContainer = document.getElementById('productResults');
+    
+    if (products.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="col-12 text-center py-4">
+                <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">検索条件に一致する商品が見つかりませんでした</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    products.forEach(product => {
+        const profitMargin = product.profitMargin || 0;
+        const profitMarginClass = profitMargin >= 30 ? 'text-success' : 
+                                  profitMargin >= 20 ? 'text-warning' : 'text-danger';
+        
+        html += `
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 product-card">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="card-title mb-1 text-truncate" title="${product.name || ''}">${product.name || '商品名未設定'}</h6>
+                            <span class="badge bg-primary">${product.manufacturerName || '未設定'}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <p class="card-text small mb-2">
+                                    ${(product.description || '') ? (product.description || '').substring(0, 80) + ((product.description || '').length > 80 ? '...' : '') : '商品説明なし'}
+                                </p>
+                                <div class="mb-2">
+                                    ${product.category ? `<span class="badge bg-light text-dark">${product.category}</span>` : ''}
+                                    ${product.requiresRefrigeration ? `<span class="badge bg-info">冷蔵</span>` : ''}
+                                    ${product.requiresFreezing ? `<span class="badge bg-primary">冷凍</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="col-4 text-center">
+                                ${product.imageUrl ? 
+                                    `<img src="${product.imageUrl}" alt="${product.name}" class="img-fluid rounded" style="max-height: 60px;">` : 
+                                    `<div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 60px;"><i class="bi bi-image text-muted"></i></div>`
+                                }
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong class="text-primary">¥${(product.retailPrice || 0).toLocaleString()}</strong><br>
+                                <small class="text-muted">販売価格</small>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong class="${profitMarginClass}">${profitMargin}%</strong><br>
+                                <small class="text-muted">利益率</small>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">在庫: ${(product.stockQuantity || 0) > 0 ? (product.stockQuantity || 0) + '個' : '在庫切れ'}</small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex gap-2">
+                            <a href="@Url.Action("ProductDetail", "ProductManagement")?id=${product.id}&qrCodeId=@qrCode?.Id" class="btn btn-outline-info btn-sm flex-fill">
+                                <i class="bi bi-eye"></i> 詳細
+                            </a>
+                            <button type="button" class="btn btn-primary btn-sm flex-fill" onclick="addProductToQRCode(${product.id}, event)">
+                                <i class="bi bi-plus-circle"></i> 追加
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    resultsContainer.innerHTML = html;
+}
+
+// 商品詳細ページへ遷移
+function viewProductDetail(productId) {
+    window.location.href = `@Url.Action("ProductDetail", "ProductManagement")?id=${productId}&qrCodeId=@qrCode?.Id`;
+}
+
+// QRコードに商品追加
+function addProductToQRCode(productId, event) {
+    event.stopPropagation();
+    
+    const notes = prompt('この商品のメモ（任意）を入力してください:');
+    if (notes === null) return; // キャンセル時
+    
+    // 現在の検索条件を保存
+    saveCurrentSearchFilters();
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '@Url.Action("AddProductToQRCode", "QR")';
+    
+    const qrCodeIdInput = document.createElement('input');
+    qrCodeIdInput.type = 'hidden';
+    qrCodeIdInput.name = 'qrCodeId';
+    qrCodeIdInput.value = '@qrCode?.Id';
+    form.appendChild(qrCodeIdInput);
+    
+    const productIdInput = document.createElement('input');
+    productIdInput.type = 'hidden';
+    productIdInput.name = 'productId';
+    productIdInput.value = productId;
+    form.appendChild(productIdInput);
+    
+    const notesInput = document.createElement('input');
+    notesInput.type = 'hidden';
+    notesInput.name = 'notes';
+    notesInput.value = notes;
+    form.appendChild(notesInput);
+    
+    const tokenInput = document.createElement('input');
+    tokenInput.type = 'hidden';
+    tokenInput.name = '__RequestVerificationToken';
+    tokenInput.value = '@Html.AntiForgeryToken()'.split('value="')[1].split('"')[0];
+    form.appendChild(tokenInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// ページ読み込み時に初期表示
+document.addEventListener('DOMContentLoaded', function() {
+    // ページ読み込み時に保存された検索条件を復元
+    restoreSearchFilters();
+    
+    // 検索欄でEnterキーを押した時の処理
+    document.getElementById('searchName').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            filterProducts();
+        }
+    });
+    
+    // 初期状態では検索促進メッセージを表示（商品は表示しない）
+});
+</script>
+
+<style>
+.product-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+.product-card {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+</style>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+

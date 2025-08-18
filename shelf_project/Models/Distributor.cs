@@ -101,14 +101,9 @@ namespace shelf_project.Models
         public virtual ICollection<DistributorSubscription>? Subscriptions { get; set; }
 
         /// <summary>
-        /// 既存設計（複数QRコード対応）
+        /// 1拠点1QRコード設計 - 単一QRコードとの関係
         /// </summary>
-        public virtual ICollection<QRCode>? QRCodes { get; set; }
-
-        /// <summary>
-        /// 新設計（1拠点=1QRコード）
-        /// </summary>
-        public virtual QRCode? PrimaryQRCode { get; set; }
+        public virtual QRCode? QRCode { get; set; }
 
         public virtual ICollection<Sale>? Sales { get; set; }
 
@@ -120,7 +115,7 @@ namespace shelf_project.Models
         public virtual ICollection<Distributor>? ChildDistributors { get; set; }
 
         /// <summary>
-        /// 有効な商品選定数を計算（本社の場合は拠点数×2倍）
+        /// 有効な商品選定数を計算（本社の場合は基本の選定数 × 拠点数）
         /// </summary>
         [NotMapped]
         public int EffectiveProductSelectionCount
@@ -137,6 +132,27 @@ namespace shelf_project.Models
                 {
                     // 個人店または支店の場合：基本の選定数
                     return ProductSelectionCount;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 有効な棚数を計算（本社の場合は拠点数、それ以外は1）
+        /// </summary>
+        [NotMapped]
+        public int EffectiveShelfCount
+        {
+            get
+            {
+                if (Company != null && Company.CompanyType == CompanyType.Chain && DistributorType == DistributorType.HeadOffice)
+                {
+                    // 本社の場合：拠点数
+                    return Company.Distributors?.Count(d => d.IsActive) ?? 1;
+                }
+                else
+                {
+                    // 個人店または支店の場合：1台
+                    return 1;
                 }
             }
         }

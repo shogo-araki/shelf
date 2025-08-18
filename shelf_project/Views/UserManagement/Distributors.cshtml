@@ -1,0 +1,64 @@
+@model IEnumerable<shelf_project.Models.Distributor>
+@{
+    ViewData["Title"] = "代理店管理";
+}
+
+<div class="container-fluid">
+    <h1>代理店管理</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>会社名</th>
+                            <th>拠点名</th>
+                            <th>ユーザー</th>
+                            <th>契約開始日</th>
+                            <th>ステータス</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var distributor in Model)
+                        {
+                            <tr>
+                                <td>@distributor.CompanyName</td>
+                                <td>@distributor.LocationName</td>
+                                <td>@distributor.User?.Email</td>
+                                <td>@distributor.ContractStartDate.ToString("yyyy/MM/dd")</td>
+                                <td>
+                                    @if (distributor.IsActive)
+                                    {
+                                        <span class="badge bg-success">有効</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">無効</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (distributor.IsActive)
+                                    {
+                                        <form asp-action="DeactivateDistributor" method="post" style="display: inline;">
+                                            <input type="hidden" name="distributorId" value="@distributor.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger">無効化</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="ActivateDistributor" method="post" style="display: inline;">
+                                            <input type="hidden" name="distributorId" value="@distributor.Id" />
+                                            <button type="submit" class="btn btn-sm btn-success">有効化</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

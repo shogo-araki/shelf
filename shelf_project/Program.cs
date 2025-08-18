@@ -12,9 +12,19 @@ namespace shelf_project
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add database context
+            // Add database context with provider selection
+            var databaseProvider = builder.Configuration["DatabaseProvider"];
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+            {
+                if (databaseProvider == "Sqlite")
+                {
+                    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+                }
+                else
+                {
+                    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+                }
+            });
 
             // Add Identity services
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -41,6 +51,9 @@ namespace shelf_project
             builder.Services.AddControllersWithViews();
             builder.Services.AddAutoMapper(typeof(Program));
             builder.Services.AddScoped<IQRCodeService, QRCodeService>();
+            builder.Services.AddScoped<DistributorAccessService>();
+            builder.Services.AddScoped<ManufacturerAccessService>();
+            builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
 
             var app = builder.Build();
 

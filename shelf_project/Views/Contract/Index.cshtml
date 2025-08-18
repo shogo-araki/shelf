@@ -68,7 +68,7 @@
                         <div class="col-md-6">
                             <p><strong>契約者名:</strong><br>@Model.CompanyName</p>
                             <p><strong>契約開始日:</strong><br>@Model.ContractStartDate.ToString("yyyy年MM月dd日")</p>
-                            <p><strong>月額利用料:</strong><br>¥@Model.MonthlyFee.ToString("N0")</p>
+                            <p><strong>月額利用料:</strong><br>¥@(((decimal?)ViewBag.SystemMonthlyFee)?.ToString("N0") ?? Model.MonthlyFee.ToString("N0"))</p>
                         </div>
                         <div class="col-md-6">
                             <p><strong>契約満了日:</strong><br>@Model.ContractMaturityDate.ToString("yyyy年MM月dd日")</p>

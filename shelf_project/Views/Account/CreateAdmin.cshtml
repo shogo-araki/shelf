@@ -1,0 +1,74 @@
+@model shelf_project.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = ViewBag.IsFirstAdmin ? "初期管理者アカウント作成" : "管理者アカウント作成";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center mb-0">@ViewData["Title"]</h3>
+            </div>
+            <div class="card-body">
+                @if (ViewBag.IsFirstAdmin)
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        システムに管理者アカウントが存在しないため、初期管理者アカウントを作成してください。
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        新しい管理者アカウントを作成します。適切な権限を持つユーザーのみに付与してください。
+                    </div>
+                }
+
+                <form asp-action="CreateAdmin" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" value="Shelf Up" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" value="管理者" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" value="admin@shelfup.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label"></label>
+                        <input asp-for="ConfirmPassword" class="form-control" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-person-plus"></i> 管理者アカウント作成
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

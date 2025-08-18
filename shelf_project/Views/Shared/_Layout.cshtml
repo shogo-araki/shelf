@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+@using Microsoft.AspNetCore.Identity
+@using shelf_project.Models
+@inject UserManager<ApplicationUser> UserManager
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="utf-8" />
@@ -23,13 +26,21 @@
                     <div class="flex-grow-1"></div>
                     
                     <ul class="navbar-nav">
-                        @if (User.Identity.IsAuthenticated)
+                        @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
                                     @await Component.InvokeAsync("UserDisplayName")
                                 </a>
                                 <ul class="dropdown-menu">
+                                    @{
+                                        var user = await UserManager.GetUserAsync(User);
+                                        if (user?.Role == UserRole.Admin)
+                                        {
+                                            <li><a class="dropdown-item" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2"></i> 管理ダッシュボード</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                        }
+                                    }
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                             <button type="submit" class="dropdown-item">ログアウト</button>

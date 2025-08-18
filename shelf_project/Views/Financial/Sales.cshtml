@@ -1,0 +1,57 @@
+@model IEnumerable<shelf_project.Models.Sale>
+@{
+    ViewData["Title"] = "売上管理";
+}
+
+<div class="container-fluid">
+    <h1>売上管理</h1>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">総売上</h5>
+                    <h2 class="text-success">¥@(ViewBag.TotalRevenue?.ToString("N0") ?? "0")</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">プラットフォーム手数料</h5>
+                    <h2 class="text-primary">¥@(ViewBag.TotalPlatformFee?.ToString("N0") ?? "0")</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>売上日</th>
+                            <th>代理店</th>
+                            <th>注文ID</th>
+                            <th>売上金額</th>
+                            <th>手数料</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sale in Model)
+                        {
+                            <tr>
+                                <td>@sale.SaleDate.ToString("yyyy/MM/dd")</td>
+                                <td>@sale.Distributor?.CompanyName</td>
+                                <td>#@sale.OrderId</td>
+                                <td>¥@sale.TotalAmount.ToString("N0")</td>
+                                <td>¥@sale.PlatformFee.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

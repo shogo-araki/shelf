@@ -1,0 +1,544 @@
+@model List<shelf_project.Models.Product>
+@{
+    ViewData["Title"] = "商品管理";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-box-seam"></i> 商品管理</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Manufacturer")">ダッシュボード</a></li>
+                    <li class="breadcrumb-item active">商品管理</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="@Url.Action("CreateProduct", "ProductManagement")" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> 新商品登録
+            </a>
+        </div>
+    </div>
+
+    <!-- 商品統計 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-box-seam text-primary fs-3"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">総商品数</h6>
+                    <h4 class="text-primary mb-0">@Model.Count</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="bg-success bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-check-circle text-success fs-3"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">販売中</h6>
+                    <h4 class="text-success mb-0">@Model.Count(p => p.IsActive)</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="bg-warning bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-exclamation-triangle text-warning fs-3"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">在庫切れ</h6>
+                    <h4 class="text-warning mb-0">@Model.Count(p => p.IsActive && p.StockQuantity == 0)</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="bg-info bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-arrow-down-circle text-info fs-3"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">低在庫</h6>
+                    <h4 class="text-info mb-0">@Model.Count(p => p.IsActive && p.StockQuantity > 0 && p.StockQuantity <= 10)</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- フィルタリング -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchName" placeholder="商品名で検索...">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterCategory">
+                        <option value="">すべてのカテゴリ</option>
+                        @foreach (var category in Model.Select(p => p.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct().OrderBy(c => c))
+                        {
+                            <option value="@category">@category</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterStock">
+                        <option value="">すべての在庫状態</option>
+                        <option value="in-stock">在庫有り</option>
+                        <option value="low-stock">低在庫（10個以下）</option>
+                        <option value="out-of-stock">在庫切れ</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-primary w-100" onclick="filterProducts()">
+                        <i class="bi bi-search"></i> 検索
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 商品一覧 -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">商品一覧</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="viewMode" id="cardView" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary" for="cardView">
+                        <i class="bi bi-grid-3x3-gap"></i> カード
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="viewMode" id="tableView" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="tableView">
+                        <i class="bi bi-list"></i> テーブル
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <!-- カード表示 -->
+                <div id="cardViewContainer">
+                    <div class="row" id="productCards">
+                        @foreach (var product in Model.OrderByDescending(p => p.CreatedAt))
+                        {
+                            <div class="col-lg-4 col-md-6 mb-4 product-item" 
+                                 data-name="@product.Name.ToLower()" 
+                                 data-category="@(product.Category ?? "")" 
+                                 data-stock="@(product.StockQuantity == 0 ? "out-of-stock" : product.StockQuantity <= 10 ? "low-stock" : "in-stock")">
+                                <div class="card h-100 product-card">
+                                    <div class="card-header d-flex justify-content-between align-items-start">
+                                        <h6 class="card-title mb-1 text-truncate" title="@product.Name">@product.Name</h6>
+                                        <div>
+                                            @if (product.IsActive)
+                                            {
+                                                <span class="badge bg-success">販売中</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">非公開</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-8">
+                                                <div class="mb-2">
+                                                    @if (!string.IsNullOrEmpty(product.Category))
+                                                    {
+                                                        <span class="badge bg-light text-dark">@product.Category</span>
+                                                    }
+                                                    @if (product.RequiresRefrigeration)
+                                                    {
+                                                        <span class="badge bg-info">冷蔵</span>
+                                                    }
+                                                    @if (product.RequiresFreezing)
+                                                    {
+                                                        <span class="badge bg-primary">冷凍</span>
+                                                    }
+                                                </div>
+                                                <p class="card-text small text-muted mb-2">
+                                                    @if (!string.IsNullOrEmpty(product.Description))
+                                                    {
+                                                        @(product.Description.Length > 60 ? product.Description.Substring(0, 60) + "..." : product.Description)
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">説明未設定</span>
+                                                    }
+                                                </p>
+                                            </div>
+                                            <div class="col-4 text-center">
+                                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                                {
+                                                    <img src="@product.ImageUrl" alt="@product.Name" class="img-fluid rounded" style="max-height: 60px;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 60px;">
+                                                        <i class="bi bi-image text-muted"></i>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                        
+                                        <hr class="my-2">
+                                        
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <strong class="text-primary">¥@product.RetailPrice.ToString("N0")</strong><br>
+                                                <small class="text-muted">販売価格</small>
+                                            </div>
+                                            <div class="col-6 text-end">
+                                                @{
+                                                    var profitMargin = Math.Round(((product.RetailPrice - product.WholesalePrice) / product.RetailPrice) * 100, 1);
+                                                    var marginClass = profitMargin >= 30 ? "text-success" : profitMargin >= 20 ? "text-warning" : "text-danger";
+                                                }
+                                                <strong class="@marginClass">@profitMargin%</strong><br>
+                                                <small class="text-muted">利益率</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-2">
+                                            <small class="text-muted">在庫: </small>
+                                            @if (product.StockQuantity == 0)
+                                            {
+                                                <span class="badge bg-danger">在庫切れ</span>
+                                            }
+                                            else if (product.StockQuantity <= 10)
+                                            {
+                                                <span class="badge bg-warning">@(product.StockQuantity)個</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">@(product.StockQuantity)個</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-footer">
+                                        <div class="d-flex gap-2">
+                                            <a href="@Url.Action("ProductDetail", "ProductManagement", new { id = product.Id })" class="btn btn-outline-info btn-sm flex-fill">
+                                                <i class="bi bi-eye"></i> 詳細
+                                            </a>
+                                            <a href="@Url.Action("EditProduct", "ProductManagement", new { id = product.Id })" class="btn btn-outline-primary btn-sm flex-fill">
+                                                <i class="bi bi-pencil"></i> 編集
+                                            </a>
+                                            <div class="dropdown">
+                                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="bi bi-three-dots"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <button class="dropdown-item" onclick="updateStock(@product.Id, @product.StockQuantity)">
+                                                            <i class="bi bi-box-seam text-info"></i> 在庫更新
+                                                        </button>
+                                                    </li>
+                                                    @if (product.IsActive)
+                                                    {
+                                                        <li>
+                                                            <button class="dropdown-item" onclick="toggleProductStatus(@product.Id, false)">
+                                                                <i class="bi bi-eye-slash text-warning"></i> 非公開にする
+                                                            </button>
+                                                        </li>
+                                                    }
+                                                    else
+                                                    {
+                                                        <li>
+                                                            <button class="dropdown-item" onclick="toggleProductStatus(@product.Id, true)">
+                                                                <i class="bi bi-eye text-success"></i> 公開する
+                                                            </button>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- テーブル表示 -->
+                <div id="tableViewContainer" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>商品名</th>
+                                    <th>カテゴリ</th>
+                                    <th>仕入価格</th>
+                                    <th>販売価格</th>
+                                    <th>利益率</th>
+                                    <th>在庫</th>
+                                    <th>ステータス</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productTable">
+                                @foreach (var product in Model.OrderByDescending(p => p.CreatedAt))
+                                {
+                                    <tr class="product-item" 
+                                        data-name="@product.Name.ToLower()" 
+                                        data-category="@(product.Category ?? "")" 
+                                        data-stock="@(product.StockQuantity == 0 ? "out-of-stock" : product.StockQuantity <= 10 ? "low-stock" : "in-stock")">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                                {
+                                                    <img src="@product.ImageUrl" alt="@product.Name" class="me-2 rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="me-2 bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-image text-muted"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <div class="fw-semibold">@product.Name</div>
+                                                    @if (!string.IsNullOrEmpty(product.Description))
+                                                    {
+                                                        <small class="text-muted">@(product.Description.Length > 30 ? product.Description.Substring(0, 30) + "..." : product.Description)</small>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(product.Category))
+                                            {
+                                                <span class="badge bg-light text-dark">@product.Category</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>¥@product.WholesalePrice.ToString("N0")</td>
+                                        <td>¥@product.RetailPrice.ToString("N0")</td>
+                                        <td>
+                                            @{
+                                                var profitMargin = Math.Round(((product.RetailPrice - product.WholesalePrice) / product.RetailPrice) * 100, 1);
+                                                var marginClass = profitMargin >= 30 ? "text-success" : profitMargin >= 20 ? "text-warning" : "text-danger";
+                                            }
+                                            <span class="@marginClass fw-semibold">@profitMargin%</span>
+                                        </td>
+                                        <td>
+                                            @if (product.StockQuantity == 0)
+                                            {
+                                                <span class="badge bg-danger">在庫切れ</span>
+                                            }
+                                            else if (product.StockQuantity <= 10)
+                                            {
+                                                <span class="badge bg-warning">@(product.StockQuantity)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">@(product.StockQuantity)</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (product.IsActive)
+                                            {
+                                                <span class="badge bg-success">販売中</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">非公開</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="@Url.Action("ProductDetail", "ProductManagement", new { id = product.Id })" class="btn btn-outline-info">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a href="@Url.Action("EditProduct", "ProductManagement", new { id = product.Id })" class="btn btn-outline-primary">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="bi bi-three-dots"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <button class="dropdown-item" onclick="updateStock(@product.Id, @product.StockQuantity)">
+                                                            <i class="bi bi-box-seam text-info"></i> 在庫更新
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-box-seam display-4 text-muted"></i>
+                    <h4 class="mt-3 text-muted">商品がまだ登録されていません</h4>
+                    <p class="text-muted">新商品登録ボタンから最初の商品を登録してください。</p>
+                    <a href="@Url.Action("CreateProduct", "ProductManagement")" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> 新商品を登録
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<script>
+// 表示モード切り替え
+document.getElementById('cardView').addEventListener('change', function() {
+    document.getElementById('cardViewContainer').style.display = 'block';
+    document.getElementById('tableViewContainer').style.display = 'none';
+});
+
+document.getElementById('tableView').addEventListener('change', function() {
+    document.getElementById('cardViewContainer').style.display = 'none';
+    document.getElementById('tableViewContainer').style.display = 'block';
+});
+
+// 商品フィルタリング
+function filterProducts() {
+    const searchName = document.getElementById('searchName').value.toLowerCase();
+    const filterCategory = document.getElementById('filterCategory').value;
+    const filterStock = document.getElementById('filterStock').value;
+
+    document.querySelectorAll('.product-item').forEach(item => {
+        const name = item.dataset.name;
+        const category = item.dataset.category;
+        const stock = item.dataset.stock;
+
+        let show = true;
+
+        if (searchName && !name.includes(searchName)) {
+            show = false;
+        }
+
+        if (filterCategory && category !== filterCategory) {
+            show = false;
+        }
+
+        if (filterStock && stock !== filterStock) {
+            show = false;
+        }
+
+        item.style.display = show ? 'block' : 'none';
+    });
+}
+
+// 検索欄でEnterキーを押した時の処理
+document.getElementById('searchName').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        filterProducts();
+    }
+});
+
+// 在庫数更新
+function updateStock(productId, currentStock) {
+    const newStock = prompt('新しい在庫数を入力してください:', currentStock);
+    if (newStock !== null && !isNaN(newStock) && parseInt(newStock) >= 0) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '@Url.Action("UpdateStock", "ProductManagement")';
+
+        const productIdInput = document.createElement('input');
+        productIdInput.type = 'hidden';
+        productIdInput.name = 'productId';
+        productIdInput.value = productId;
+        form.appendChild(productIdInput);
+
+        const stockInput = document.createElement('input');
+        stockInput.type = 'hidden';
+        stockInput.name = 'stockQuantity';
+        stockInput.value = parseInt(newStock);
+        form.appendChild(stockInput);
+
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = '__RequestVerificationToken';
+        tokenInput.value = '@Html.AntiForgeryToken()'.split('value="')[1].split('"')[0];
+        form.appendChild(tokenInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// 商品ステータス切り替え
+function toggleProductStatus(productId, isActive) {
+    const message = isActive ? '商品を公開しますか？' : '商品を非公開にしますか？';
+    if (confirm(message)) {
+        // 実装予定：商品の公開/非公開切り替え機能
+        alert('この機能は今後実装予定です。');
+    }
+}
+</script>
+
+<style>
+.product-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.125);
+}
+
+.product-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+@@media (max-width: 768px) {
+    .product-card .card-footer .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .product-card .card-footer .btn {
+        width: 100%;
+    }
+}
+</style>

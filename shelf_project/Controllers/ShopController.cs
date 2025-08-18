@@ -78,7 +78,7 @@ namespace shelf_project.Controllers
 
             var product = await _context.Products
                 .Include(p => p.Manufacturer)
-                .Include(p => p.Reviews)
+                .Include(p => p.Reviews!)
                 .ThenInclude(r => r.User)
                 .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
 

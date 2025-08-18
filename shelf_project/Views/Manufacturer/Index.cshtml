@@ -143,10 +143,10 @@
                     <h5>クイックアクション</h5>
                 </div>
                 <div class="card-body">
-                    <a href="@Url.Action("CreateProduct")" class="btn btn-primary btn-block mb-2">新商品登録</a>
-                    <a href="@Url.Action("Products")" class="btn btn-info btn-block mb-2">商品管理</a>
-                    <a href="@Url.Action("Orders")" class="btn btn-success btn-block mb-2">注文管理</a>
-                    <a href="@Url.Action("Analytics")" class="btn btn-warning btn-block mb-2">売上分析</a>
+                    <a href="@Url.Action("CreateProduct", "ProductManagement")" class="btn btn-primary btn-block mb-2">新商品登録</a>
+                    <a href="@Url.Action("Products", "ProductManagement")" class="btn btn-info btn-block mb-2">商品管理</a>
+                    <a href="@Url.Action("Orders", "OrderManagement")" class="btn btn-success btn-block mb-2">注文管理</a>
+                    <a href="@Url.Action("Analytics", "Manufacturer")" class="btn btn-warning btn-block mb-2">売上分析</a>
                 </div>
             </div>
             

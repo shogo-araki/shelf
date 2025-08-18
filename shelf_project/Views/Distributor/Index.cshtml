@@ -85,7 +85,7 @@
                     </div>
                     <h6 class="text-muted mb-1">QRコード商品数</h6>
                     <h4 class="text-info mb-0">
-                        @(Model.QRCodes?.SelectMany(q => q.QRCodeProducts ?? new List<QRCodeProduct>()).Count(qcp => qcp.IsActive) ?? 0)
+                        @(Model.QRCode?.QRCodeProducts?.Count(qcp => qcp.IsActive) ?? 0)
                     </h4>
                     <small class="text-muted">登録済み</small>
                 </div>
@@ -100,7 +100,7 @@
                         </div>
                     </div>
                     <h6 class="text-muted mb-1">設置棚数</h6>
-                    <h4 class="text-warning mb-0">@Model.ShelfCount</h4>
+                    <h4 class="text-warning mb-0">@Model.EffectiveShelfCount</h4>
                     <small class="text-muted">台</small>
                 </div>
             </div>
@@ -125,7 +125,7 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label text-muted small">月額料金</label>
-                                <div class="fw-semibold">¥@Model.MonthlyFee.ToString("N0")</div>
+                                <div class="fw-semibold">¥@(((decimal?)ViewBag.SystemMonthlyFee)?.ToString("N0") ?? Model.MonthlyFee.ToString("N0"))</div>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -170,7 +170,7 @@
                     <div class="row g-3">
                         <!-- 主要操作 -->
                         <div class="col-md-4">
-                            <a href="@Url.Action("QRCodes", new { locationId = Model.Id })" class="text-decoration-none">
+                            <a href="@Url.Action("QRCodes", "QR", new { locationId = Model.Id })" class="text-decoration-none">
                                 <div class="card h-100 border-primary border-opacity-25 hover-shadow">
                                     <div class="card-body text-center">
                                         <div class="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">
@@ -239,7 +239,7 @@
                             </div>
                         }
                         <div class="col-md-4">
-                            <a href="@Url.Action("Settings")" class="text-decoration-none">
+                            <a href="@Url.Action("Settings", "Settings")" class="text-decoration-none">
                                 <div class="card h-100 border-dark border-opacity-25 hover-shadow">
                                     <div class="card-body text-center">
                                         <div class="bg-dark bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style="width: 60px; height: 60px;">

@@ -172,7 +172,7 @@
                                 <td>¥@hqThisMonth.Sum(s => s.DistributorCommission).ToString("N0")</td>
                                 <td>¥@hqTotal.Sum(s => s.TotalAmount).ToString("N0")</td>
                                 <td>¥@hqTotal.Sum(s => s.DistributorCommission).ToString("N0")</td>
-                                <td>@(Model.QRCodes?.Count ?? 0) 個</td>
+                                <td>@(Model.QRCode != null ? "1" : "0") 個</td>
                             </tr>
                             
                             <!-- Child Locations -->
@@ -189,7 +189,7 @@
                                     <td>¥@locationThisMonth.Sum(s => s.DistributorCommission).ToString("N0")</td>
                                     <td>¥@locationTotal.Sum(s => s.TotalAmount).ToString("N0")</td>
                                     <td>¥@locationTotal.Sum(s => s.DistributorCommission).ToString("N0")</td>
-                                    <td>@(location.QRCodes?.Count ?? 0) 個</td>
+                                    <td>@(location.QRCode != null ? "1" : "0") 個</td>
                                 </tr>
                             }
                         </tbody>
@@ -200,7 +200,7 @@
                                 <th>¥@allSales.Where(s => s.SaleDate.Month == DateTime.Now.Month && s.SaleDate.Year == DateTime.Now.Year).Sum(s => s.DistributorCommission).ToString("N0")</th>
                                 <th>¥@totalRevenue.ToString("N0")</th>
                                 <th>¥@totalCommission.ToString("N0")</th>
-                                <th>@(Model.QRCodes?.Count ?? 0 + (Model.ChildDistributors?.Sum(cd => cd.QRCodes?.Count ?? 0) ?? 0)) 個</th>
+                                <th>@((Model.QRCode != null ? 1 : 0) + (Model.ChildDistributors?.Sum(cd => cd.QRCode != null ? 1 : 0) ?? 0)) 個</th>
                             </tr>
                         </tfoot>
                     </table>

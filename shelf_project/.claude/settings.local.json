@@ -8,7 +8,22 @@
       "Bash(dotnet build:*)",
       "Bash(mkdir:*)",
       "Bash(dotnet run:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(powershell:*)",
+      "Bash(csc:*)",
+      "Bash(ExecuteSQL.exe)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(del ExecuteSQL.cs)",
+      "Bash(move CreateFirstAdmin.cshtml CreateAdmin.cshtml)",
+      "Bash(ren:*)",
+      "Bash(move:*)",
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(cp:*)",
+      "Bash(DebugProducts.exe)",
+      "Bash(del DebugProducts.cs)"
     ],
     "deny": [],
     "ask": []

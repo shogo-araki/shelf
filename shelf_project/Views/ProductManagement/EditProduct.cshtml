@@ -1,0 +1,477 @@
+@model shelf_project.ViewModels.ProductViewModel
+@{
+    ViewData["Title"] = "商品編集";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-pencil-square"></i> 商品編集</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Manufacturer")">ダッシュボード</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Products", "ProductManagement")">商品管理</a></li>
+                    <li class="breadcrumb-item active">商品編集</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="@Url.Action("ProductDetail", "ProductManagement", new { id = Model.Id })" class="btn btn-outline-info me-2">
+                <i class="bi bi-eye"></i> 詳細表示
+            </a>
+            <a href="@Url.Action("Products", "ProductManagement")" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 商品管理に戻る
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="EditProduct" method="post" class="needs-validation" novalidate>
+        <input asp-for="Id" type="hidden" />
+        
+        <div class="row">
+            <!-- 基本情報 -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-info-circle"></i> 基本情報</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Name" class="form-control" placeholder="商品名" required>
+                                    <label asp-for="Name">商品名 <span class="text-danger">*</span></label>
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                    <div class="invalid-feedback">
+                                        商品名を入力してください
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3">
+                                    <select asp-for="Category" class="form-select">
+                                        <option value="">カテゴリを選択</option>
+                                        <option value="食品">食品</option>
+                                        <option value="飲料">飲料</option>
+                                        <option value="冷凍食品">冷凍食品</option>
+                                        <option value="冷蔵食品">冷蔵食品</option>
+                                        <option value="日用品">日用品</option>
+                                        <option value="化粧品">化粧品</option>
+                                        <option value="文具">文具</option>
+                                        <option value="その他">その他</option>
+                                    </select>
+                                    <label asp-for="Category">カテゴリ</label>
+                                    <span asp-validation-for="Category" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <textarea asp-for="Description" class="form-control" placeholder="商品説明" style="height: 120px"></textarea>
+                            <label asp-for="Description">商品説明</label>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                            <div class="form-text">商品の特徴、用途、成分などを詳しく記載してください</div>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="ImageUrl" class="form-control" placeholder="画像URL">
+                            <label asp-for="ImageUrl">商品画像URL</label>
+                            <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                            <div class="form-text">商品画像のURL（例: https://example.com/image.jpg）</div>
+                        </div>
+
+                        <!-- 画像プレビュー -->
+                        <div id="imagePreview" class="mb-3" style="display: none;">
+                            <label class="form-label">画像プレビュー</label>
+                            <div class="border rounded p-3 text-center bg-light">
+                                <img id="previewImg" src="" alt="商品画像プレビュー" class="img-fluid rounded" style="max-height: 200px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 価格設定 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-currency-yen"></i> 価格設定</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="WholesalePrice" type="number" step="0.01" class="form-control" placeholder="仕入価格" required>
+                                    <label asp-for="WholesalePrice">仕入価格 <span class="text-danger">*</span></label>
+                                    <span asp-validation-for="WholesalePrice" class="text-danger"></span>
+                                    <div class="form-text">代理店への卸売価格</div>
+                                    <div class="invalid-feedback">
+                                        仕入価格を入力してください
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="RetailPrice" type="number" step="0.01" class="form-control" placeholder="販売価格" required>
+                                    <label asp-for="RetailPrice">販売価格 <span class="text-danger">*</span></label>
+                                    <span asp-validation-for="RetailPrice" class="text-danger"></span>
+                                    <div class="form-text">お客様への販売価格</div>
+                                    <div class="invalid-feedback">
+                                        販売価格を入力してください
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 利益率計算表示 -->
+                        <div class="alert alert-info" id="profitInfo">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="h5 text-primary mb-1" id="profitMargin">0%</div>
+                                    <small>利益率</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="h5 text-success mb-1" id="profitAmount">¥0</div>
+                                    <small>利益額</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="h6 text-muted mb-1" id="profitStatus">-</div>
+                                    <small>利益率評価</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 配送・注文設定 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-truck"></i> 配送・注文設定</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="ShippingFee" type="number" step="0.01" class="form-control" placeholder="配送料">
+                                    <label asp-for="ShippingFee">配送料</label>
+                                    <span asp-validation-for="ShippingFee" class="text-danger"></span>
+                                    <div class="form-text">0円で無料配送</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="FreeShippingThreshold" type="number" step="0.01" class="form-control" placeholder="無料配送条件">
+                                    <label asp-for="FreeShippingThreshold">無料配送条件</label>
+                                    <span asp-validation-for="FreeShippingThreshold" class="text-danger"></span>
+                                    <div class="form-text">この金額以上で配送料無料</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="MinimumOrderQuantity" type="number" class="form-control" placeholder="最小注文数" min="1">
+                                    <label asp-for="MinimumOrderQuantity">最小注文数</label>
+                                    <span asp-validation-for="MinimumOrderQuantity" class="text-danger"></span>
+                                    <div class="form-text">一回の注文での最小個数</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- サイドバー -->
+            <div class="col-lg-4">
+                <!-- 在庫設定 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-box-seam"></i> 在庫設定</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-floating mb-3">
+                            <input asp-for="StockQuantity" type="number" class="form-control" placeholder="在庫数" min="0">
+                            <label asp-for="StockQuantity">現在の在庫数</label>
+                            <span asp-validation-for="StockQuantity" class="text-danger"></span>
+                            <div class="form-text">現在の在庫数量</div>
+                        </div>
+
+                        <!-- 在庫状態表示 -->
+                        <div class="alert alert-light" id="stockStatus">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary fs-6" id="stockBadge">在庫状態</span>
+                                </div>
+                                <small class="text-muted" id="stockMessage">在庫数を入力してください</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 商品特性 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-gear"></i> 商品特性</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            <input asp-for="RequiresRefrigeration" class="form-check-input" type="checkbox">
+                            <label asp-for="RequiresRefrigeration" class="form-check-label">
+                                <i class="bi bi-snow2 text-info"></i> 冷蔵保存が必要
+                            </label>
+                            <div class="form-text">2-8°Cでの保存が必要な商品</div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input asp-for="RequiresFreezing" class="form-check-input" type="checkbox">
+                            <label asp-for="RequiresFreezing" class="form-check-label">
+                                <i class="bi bi-snow3 text-primary"></i> 冷凍保存が必要
+                            </label>
+                            <div class="form-text">-18°C以下での保存が必要な商品</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 変更履歴 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock-history"></i> 変更履歴</h5>
+                    </div>
+                    <div class="card-body">
+                        <small class="text-muted">
+                            <div class="mb-2">
+                                <strong>商品ID:</strong> @Model.Id
+                            </div>
+                            <div class="mb-2">
+                                <strong>最終更新:</strong> <span id="lastModified">編集中...</span>
+                            </div>
+                        </small>
+                    </div>
+                </div>
+
+                <!-- アクションボタン -->
+                <div class="card">
+                    <div class="card-body">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="bi bi-check-circle"></i> 変更を保存
+                        </button>
+                        <div class="d-grid gap-2">
+                            <a href="@Url.Action("ProductDetail", "ProductManagement", new { id = Model.Id })" class="btn btn-outline-info">
+                                <i class="bi bi-eye"></i> 詳細表示
+                            </a>
+                            <a href="@Url.Action("Products", "ProductManagement")" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> キャンセル
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050;">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const wholesalePrice = document.getElementById('WholesalePrice');
+    const retailPrice = document.getElementById('RetailPrice');
+    const stockQuantity = document.getElementById('StockQuantity');
+    const imageUrl = document.getElementById('ImageUrl');
+    
+    const profitMargin = document.getElementById('profitMargin');
+    const profitAmount = document.getElementById('profitAmount');
+    const profitStatus = document.getElementById('profitStatus');
+    
+    const stockBadge = document.getElementById('stockBadge');
+    const stockMessage = document.getElementById('stockMessage');
+    
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+
+    // 利益率計算
+    function calculateProfit() {
+        const wholesale = parseFloat(wholesalePrice.value) || 0;
+        const retail = parseFloat(retailPrice.value) || 0;
+
+        if (wholesale > 0 && retail > 0) {
+            const profit = retail - wholesale;
+            const margin = (profit / retail) * 100;
+
+            profitMargin.textContent = margin.toFixed(1) + '%';
+            profitAmount.textContent = '¥' + profit.toLocaleString();
+
+            // 利益率評価
+            let status = '';
+            let statusClass = 'text-muted';
+            
+            if (margin >= 30) {
+                status = '高利益率';
+                statusClass = 'text-success';
+            } else if (margin >= 20) {
+                status = '標準的';
+                statusClass = 'text-warning';
+            } else if (margin >= 10) {
+                status = '低利益率';
+                statusClass = 'text-danger';
+            } else {
+                status = '要検討';
+                statusClass = 'text-danger';
+            }
+
+            profitStatus.textContent = status;
+            profitStatus.className = 'h6 mb-1 ' + statusClass;
+        } else {
+            profitMargin.textContent = '0%';
+            profitAmount.textContent = '¥0';
+            profitStatus.textContent = '-';
+            profitStatus.className = 'h6 mb-1 text-muted';
+        }
+    }
+
+    // 在庫状態更新
+    function updateStockStatus() {
+        const stock = parseInt(stockQuantity.value) || 0;
+        
+        if (stock === 0) {
+            stockBadge.textContent = '在庫切れ';
+            stockBadge.className = 'badge bg-danger fs-6';
+            stockMessage.textContent = '在庫がありません。補充が必要です。';
+        } else if (stock <= 10) {
+            stockBadge.textContent = '低在庫';
+            stockBadge.className = 'badge bg-warning fs-6';
+            stockMessage.textContent = '在庫が少なくなっています。補充をご検討ください。';
+        } else {
+            stockBadge.textContent = '在庫十分';
+            stockBadge.className = 'badge bg-success fs-6';
+            stockMessage.textContent = '十分な在庫があります。';
+        }
+    }
+
+    // 画像プレビュー
+    function updateImagePreview() {
+        const url = imageUrl.value.trim();
+        if (url) {
+            previewImg.src = url;
+            previewImg.onload = function() {
+                imagePreview.style.display = 'block';
+            };
+            previewImg.onerror = function() {
+                imagePreview.style.display = 'none';
+            };
+        } else {
+            imagePreview.style.display = 'none';
+        }
+    }
+
+    // イベントリスナー
+    wholesalePrice.addEventListener('input', calculateProfit);
+    retailPrice.addEventListener('input', calculateProfit);
+    stockQuantity.addEventListener('input', updateStockStatus);
+    imageUrl.addEventListener('input', updateImagePreview);
+
+    // 初期計算
+    calculateProfit();
+    updateStockStatus();
+    updateImagePreview();
+
+    // 最終更新日時表示
+    document.getElementById('lastModified').textContent = new Date().toLocaleDateString('ja-JP');
+
+    // Bootstrap form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // 価格フィールドの検証
+    retailPrice.addEventListener('input', function() {
+        const wholesale = parseFloat(wholesalePrice.value) || 0;
+        const retail = parseFloat(this.value) || 0;
+        
+        if (retail > 0 && wholesale > 0 && retail <= wholesale) {
+            this.setCustomValidity('販売価格は仕入価格より高く設定してください');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+</script>
+
+<style>
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+    color: #0d6efd;
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.form-check-label {
+    font-weight: 500;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-weight: 500;
+}
+
+.needs-validation .form-control:invalid {
+    border-color: #dc3545;
+}
+
+.needs-validation .form-control:valid {
+    border-color: #198754;
+}
+
+.badge.fs-6 {
+    font-size: 0.9rem;
+    padding: 0.5em 0.75em;
+}
+
+#imagePreview img {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #dee2e6;
+}
+
+.alert {
+    border-radius: 0.5rem;
+}
+
+.sticky-top {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 20px;
+}
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
